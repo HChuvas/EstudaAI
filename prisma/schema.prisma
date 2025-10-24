@@ -29,35 +29,37 @@ model User {
   teacher Teacher?
   reminders Reminder[]
   disciplines Discipline[]
+  messages Message[]
+  materials Material[]
 }
 
 model Student {
-  user_id Int @id
-  user  User   @relation(fields: [user_id], references: [id])
+  userId Int @id
+  user  User   @relation(fields: [userId], references: [id])
 }
 
 model Teacher {
-  user_id Int @id
-  user  User   @relation(fields: [user_id], references: [id])
+  userId Int @id
+  user  User   @relation(fields: [userId], references: [id])
 }
 
 model Reminder {
   id Int @id @default(autoincrement())
-  user_id Int
+  userId Int
   created_at DateTime @default(now())
   title String
   description String
   due_date DateTime
 
-  user User @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Discipline {
   id Int @id @default(autoincrement())
-  user_id Int
+  userId Int
   name String
 
-  user User @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [userId], references: [id])
   topics Topic[]
 }
 
@@ -66,12 +68,37 @@ model Topic {
   discipline_id Int
 
   discipline Discipline @relation(fields: [discipline_id], references: [id])
+  summaries Summary[]
+  materials Material[]
 }
 
 model Message {
   id Int @id @default(autoincrement())
-  user_id Int
+  userId Int? 
   topic_id Int
   content String
-  title String 
+  title String
+
+  user User? @relation(fields: [userId], references: [id]) 
+}
+
+model Summary {
+  id Int @id @default(autoincrement())
+  content String
+  title String
+  topic_id Int
+
+  topic Topic @relation(fields: [topic_id], references: [id])
+}
+
+model Material {
+  id Int @id @default(autoincrement())
+  title String
+  file_type String
+  file_path String
+  userId Int
+  topic_id Int
+
+  user User @relation(fields: [userId], references: [id])
+  topic Topic @relation(fields: [topic_id], references: [id])
 }
