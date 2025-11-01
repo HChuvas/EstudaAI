@@ -56,7 +56,7 @@ model Discipline {
 model Topic {
   id            Int        @id @default(autoincrement())
   discipline_id Int
-  title         String?    @default(" ")
+  title         String    @default("")
   materials     Material[]
   summaries     Summary[]
   discipline    Discipline @relation(fields: [discipline_id], references: [id])
