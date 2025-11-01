@@ -13,8 +13,8 @@ model User {
   name                 String
   email                String       @unique
   password             String
-  logged_in            Boolean
-  user_token           String
+  logged_in            Boolean      @default(false)
+  user_token           String       @default("")
   token_expiration     DateTime     @default(now())
   profile_picture_path String       @default("src/uploads/676-6764065_default-profile-picture-transparent-hd-png-download.png")
   disciplines          Discipline[]
@@ -56,6 +56,7 @@ model Discipline {
 model Topic {
   id            Int        @id @default(autoincrement())
   discipline_id Int
+  title         String?    @default(" ")
   materials     Material[]
   summaries     Summary[]
   discipline    Discipline @relation(fields: [discipline_id], references: [id])

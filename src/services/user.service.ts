@@ -39,7 +39,10 @@ class UserService {
     }
 
     async register(body) {
-        
+        const newUser = await prisma.user.create({
+            data: body
+        })
+        return newUser
     }
 }
 
