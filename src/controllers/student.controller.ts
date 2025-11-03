@@ -1,12 +1,13 @@
 import type { NextFunction, Request, Response } from "express"
 import { CreateUserRequestSchema } from "../schemas/UsersRequestSchema.js"
+import { studentService } from "../services/student.service.js"
 import { userService } from "../services/user.service.js"
 
-export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
+export const registerStudent = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = CreateUserRequestSchema.parse(req.body)
-        const newUser = await userService.registerService(body)
-        res.status(201).json(newUser)
+        const newStudent = await studentService.registerService(body)
+        res.status(201).json(newStudent)
     } catch (error) {
         next(error)
     }

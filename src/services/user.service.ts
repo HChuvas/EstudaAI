@@ -3,7 +3,7 @@ import type { Role } from "../types/roles.js";
 import jwt from "jsonwebtoken"
 
 class UserService {
-    async login(email: string, password: string) {
+    async loginService(email: string, password: string) {
         const user = await prisma.user.findFirst({
             where: { email, password },
             include: {
@@ -18,18 +18,20 @@ class UserService {
 
         let role: Role
 
+        console.log(user.student)
+
         if(user.student) {
             role = "STUDENT"
         }
-
-        if(user.teacher) {
-            role = "TEACHER"
+        else {
+            if(user.teacher) {
+                role = "TEACHER"
+            }
+            else{
+                throw new Error("Unknown user type")
+            }
         }
-
-        else{
-            throw new Error("Unknown user type")
-        }
-
+        
         return {
             id: user.id,
             name: user.name,
@@ -38,9 +40,13 @@ class UserService {
         }
     }
 
-    async register(body: { name: string; email: string; password: string; }) {
+    async registerService(body: { name: string; email: string; password: string; }) {
         const newUser = await prisma.user.create({
-            data: body
+            data: {
+                email: body.email,
+                name: body.name,
+                password: body.password,
+            }
         })
         return newUser
     }
@@ -49,6 +55,7 @@ class UserService {
         const secret = process.env.ACCESS_TOKEN_SECRET
         if(!secret) throw new Error("ACCESS TOKEN NOT DEFINED")
         const acessToken = jwt.sign({id: userId, userRole: role}, secret, {expiresIn: "1h"})
+        return acessToken
     }
 }
 
