@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express"
-import { CreateUserRequestSchema } from "../schemas/UsersRequestSchema.js"
+import { CreateReminderSchema, CreateUserRequestSchema } from "../schemas/UsersRequestSchema.js"
 import { studentService } from "../services/student.service.js"
 import { userService } from "../services/user.service.js"
 
@@ -31,5 +31,36 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         
     } catch (error) {
         next(error) 
+    }
+}
+
+export const getReminders = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        console.log(req.auth?.id)
+        const userId = Number(req.auth?.id)
+        console.log(userId)
+        const reminders = await studentService.getRemindersService(userId)
+        res.status(200).json(reminders)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const createReminder = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = Number(req.auth?.id)
+        const { title, description, due_date } = CreateReminderSchema.parse(req.body)
+        const reminderData: { title: string; description: string; userId: number; due_date?: Date } = {
+            title,
+            description,
+            userId,
+          };
+        if (due_date) {
+            reminderData.due_date = new Date(due_date);
+        }
+        const reminder = await studentService.createReminderService(reminderData)
+        res.status(201).json(reminder)
+    } catch (error) {
+        next(error)
     }
 }

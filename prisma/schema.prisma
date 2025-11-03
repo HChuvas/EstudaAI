@@ -41,7 +41,7 @@ model Reminder {
   created_at  DateTime @default(now())
   title       String
   description String
-  due_date    DateTime
+  due_date    DateTime?
   user        User     @relation(fields: [userId], references: [id])
 }
 
