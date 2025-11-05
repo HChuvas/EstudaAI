@@ -37,6 +37,28 @@ class StudentService {
         })
         return reminder
     }
+
+    async createSubjectService(userId: number, name: string) {
+        const subject = await prisma.subject.create({
+            data: {
+                name,
+                user: {
+                    connect: { id: userId }
+                }
+            }
+        })
+        return subject
+    }
+
+    async getSubjectsService(userId: number) {
+        const subjects = await prisma.subject.findMany({
+            where: {
+                userId
+            }
+        })
+
+        return subjects
+    }
 }
 
 export const studentService = new StudentService()

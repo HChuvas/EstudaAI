@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express"
 import { CreateReminderSchema, CreateUserRequestSchema } from "../schemas/UsersRequestSchema.js"
 import { studentService } from "../services/student.service.js"
 import { userService } from "../services/user.service.js"
+import { prisma } from "../database/index.js"
 
 export const registerStudent = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -60,6 +61,27 @@ export const createReminder = async (req: Request, res: Response, next: NextFunc
         }
         const reminder = await studentService.createReminderService(reminderData)
         res.status(201).json(reminder)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const createSubject = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = Number(req.auth?.id)
+        const { name } = req.body
+        const subject = await studentService.createSubjectService(userId, name)
+        res.status(201).json(subject)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getSubjects = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = Number(req.auth?.id)
+        const subjects = await studentService.getSubjectsService(userId)
+        res.status(201).json(subjects)
     } catch (error) {
         next(error)
     }
