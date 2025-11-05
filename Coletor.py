@@ -7,8 +7,9 @@
 #                               1: tamanho do arquivo -> "e se eu quiser colocar Dom Casmurro **INTEIRO**, pra estudar para minha prova de paradidático"
 #                               2: e os materiais visuais dentro de um slide
 #
-# Precisamos de Chunking dos dados para: arquivos muito longos
+# Precisamos de Chunking dos dados para: arquivos muito longos ou muitos arquivos
 import os, whisper, transformers
+from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter
@@ -20,7 +21,10 @@ model = whisper.load_model("large")
 
 def pdf2md_extractor(file_path:str):
     result = conversor_pdf.convert(file_path)
-    return result.document.export_to_markdown()
+    text = result.document.export_to_markdown() or ""
+    if not text.strip():
+        return ["Sem texto reconhecido no documento"]
+    return text
 
 def mp2txt_extractor(file_path:str):
         
@@ -46,4 +50,9 @@ def has_audio(file_path:str):
         return True
 
 def chunk_data(text_data:str):
-    return
+    splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n", ".", " "],
+        chunk_size=2000,
+        chunk_overlap=100
+    )
+    return splitter.split_text(text_data)
