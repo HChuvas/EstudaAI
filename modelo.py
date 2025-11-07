@@ -51,6 +51,8 @@ def geracao_resumo(user_prompt):
                     Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato DD/MM/YYYY DENTRO do campo de DATA. 
                     Se o ano não for explícito, use o ano atual (2025).
                     Para categorizar um lembrete, busque por mensagens que evoquem eventos no futuro próximo como:
+                    Gere SOMENTE o json, e nada mais.
+                    Não gere NENHUM MARKDOWN, somente como ***STRING PADRÃO***
 
                     Exemplos de datas inválidas:
 
@@ -86,17 +88,19 @@ def conversar(conteudo:str):
     response = chain.invoke({})
     return response.content
 
+entrada = "07 - Arquitetura Computadores - Entrada e saida (1).pdf"
+
 @app.route("/generate", methods=["POST"])
 def generate_summary():
     
     try:
-        data = request.get_json()
-        user_prompt = data.get("prompt")
+        # data = request.get_json()
+        # user_prompt = data.get("prompt")
 
-        if not user_prompt:
-            return jsonify({"error": "Campo 'prompt' é obrigatório"}), 400
+        # if not user_prompt:
+        #     return jsonify({"error": "Campo 'prompt' é obrigatório"}), 400
 
-        result = geracao_resumo(user_prompt)
+        result = geracao_resumo(entrada)
 
         try:
             json_result = json.loads(result)
@@ -110,5 +114,18 @@ def generate_summary():
         print(e)
         return jsonify({"error": e}), 500
     
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+"""if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)"""
+
+result = geracao_resumo(entrada)
+
+import json
+import re
+
+def parse_llm_json(response_text):
+    # Remove blocos de markdown tipo ```json ... ``` ou ```
+    cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", response_text.strip())
+    cleaned = re.sub(r"```$", "", cleaned.strip())
+    return json.loads(cleaned)
+
+print(parse_llm_json(result))
