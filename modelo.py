@@ -6,12 +6,18 @@ from Coletor import *
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 import json
+import re
 
 load_dotenv()
 
 app = Flask(__name__)
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("API_KEY"))
+
+def parse_llm_json(response_text):
+    cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", response_text.strip())
+    cleaned = re.sub(r"```$", "", cleaned.strip())
+    return json.loads(cleaned)
 
 def geracao_resumo(user_prompt):
     system_prompt = """
@@ -103,7 +109,7 @@ def generate_summary():
         result = geracao_resumo(entrada)
 
         try:
-            json_result = json.loads(result)
+            json_result = parse_llm_json(result)
         
         except json.JSONDecodeError:
             json_result = {"raw_output": result}
@@ -114,18 +120,5 @@ def generate_summary():
         print(e)
         return jsonify({"error": e}), 500
     
-"""if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)"""
-
-result = geracao_resumo(entrada)
-
-import json
-import re
-
-def parse_llm_json(response_text):
-    # Remove blocos de markdown tipo ```json ... ``` ou ```
-    cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", response_text.strip())
-    cleaned = re.sub(r"```$", "", cleaned.strip())
-    return json.loads(cleaned)
-
-print(parse_llm_json(result))
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
