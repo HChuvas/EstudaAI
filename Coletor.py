@@ -13,6 +13,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTe
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+#embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 os.environ["PATH"] += os.pathsep + os.path.abspath("./ffmpeg/bin")
 
@@ -51,8 +54,9 @@ def has_audio(file_path:str):
 
 def chunk_data(text_data:str):
     splitter = RecursiveCharacterTextSplitter(
-        separators=["\n\n", "\n", ".", " "],
+        separators=["\n\n", "\n", ".", "?", "!", " ", ""],
         chunk_size=2000,
         chunk_overlap=100
     )
-    return splitter.split_text(text_data)
+    chunks = splitter.split_text(text_data)
+    return [chunk.strip() for chunk in chunks if chunk.strip()]

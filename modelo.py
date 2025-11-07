@@ -80,13 +80,11 @@ def geracao_resumo(user_prompt):
 
     return output.content
 
-arquivos = ["7-arquitetura_software.pdf", "8-arquitetura_software_web.pdf"]
-
-entrada = [pdf2md_extractor(f) for f in arquivos]
-
-entrada = "\n\n".join(entrada)
-
-print(geracao_resumo(entrada))
+def conversar(conteudo:str):
+    prompt = ChatPromptTemplate.from_template(conteudo)
+    chain = prompt | llm
+    response = chain.invoke({})
+    return response.content
 
 @app.route("/generate", methods=["POST"])
 def generate_summary():
