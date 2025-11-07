@@ -96,7 +96,7 @@ def conversar(conteudo:str):
 
 entrada = "07 - Arquitetura Computadores - Entrada e saida (1).pdf"
 
-@app.route("/generate", methods=["POST"])
+@app.route("/generate", methods=["GET"])
 def generate_summary():
     
     try:
