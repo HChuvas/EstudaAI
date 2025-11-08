@@ -33,7 +33,7 @@ def geracao_resumo(user_prompt):
                             "resumo": {{
                                 "título": "titulo do resumo",
                                 "conteúdo": "todo o conteúdo do resumo"
-                            }}
+                            }},
                             "lembretes": {{
                                 "lembrete1": {{
                                 "titulo": "titulo do lembrete",
@@ -52,13 +52,13 @@ def geracao_resumo(user_prompt):
                         }}
 
                     OBS:
+                    Gere SOMENTE o json, e nada mais.
+                    Não gere NENHUM MARKDOWN, somente como ***STRING PADRÃO***
                     Lembretes consistem de anúncios feitos dentro do conteúdo marcando datas. 
-                    No caso de não haver anúncio EXPLÍCITO da data, IGNORE o campo data completamente.
+                    No caso de não haver anúncio EXPLÍCITO da data deixe o campo DATA VAZIO ("").
                     Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato DD/MM/YYYY DENTRO do campo de DATA. 
                     Se o ano não for explícito, use o ano atual (2025).
                     Para categorizar um lembrete, busque por mensagens que evoquem eventos no futuro próximo como:
-                    Gere SOMENTE o json, e nada mais.
-                    Não gere NENHUM MARKDOWN, somente como ***STRING PADRÃO***
 
                     Exemplos de datas inválidas:
 
@@ -68,11 +68,12 @@ def geracao_resumo(user_prompt):
                     
                     Exemplos de datas válidas:
 
-                        - '[Dia 25 de Dezembro] (data válida. experado (15/12/2025)), [será feriado.] (descrição), então não haverá aula.'
-                        - '[16 de Novembro] (data válida. experado (16/11/2025)) [eu irei para um congresso e ficarei fora até dia 26] (descrição. Segunda data é opcional.)'
-                        - '[14 de Maio de 2026] (data válida, experado (14/05/2026)), celebrarei 50 anos de casamento, por isso [não haverá aula] (descrição)'
+                        - '[Dia 25 de Dezembro / 25/12] (data válida. esperado (25/12/2025)), [será feriado.] (descrição), então não haverá aula.'
+                        - '[16 de Novembro / 16/11] (data válida. esperado (16/11/2025)) [eu irei para um congresso e ficarei fora até dia 26] (descrição. Segunda data é opcional.)'
+                        - '[14 de Maio de 2026 / 14/05] (data válida, esperado (14/05/2026)), celebrarei 50 anos de casamento, por isso [não haverá aula] (descrição)'
+                        Você DEVE formatar a data para qualquer tipo de expressão que se refira a uma data.
 
-                    Na área de lembretes, caso não haja nenhum lembrete relevante dento do conteúdo analisado, NÃO CRIE essa estrutura. 
+                    Na área de lembretes, caso não haja nenhum lembrete relevante dento do conteúdo analisado, mantenha o campo lembrete como um campo vazio. Ex: "lembretes": {{}}. 
                     Essa área de lembretes é estritamente para anúncios feitos em aula ou no material e não tem haver diretamente com o conteúdo do resumo.
 
                     O tópico desse material é '{input}'.
@@ -95,7 +96,8 @@ def conversar(conteudo:str):
     return response.content
 
 entrada = "07 - Arquitetura Computadores - Entrada e saida (1).pdf"
-
+result = geracao_resumo(entrada)
+print(parse_llm_json(result))
 @app.route("/generate", methods=["GET"])
 def generate_summary():
     
@@ -107,6 +109,7 @@ def generate_summary():
         #     return jsonify({"error": "Campo 'prompt' é obrigatório"}), 400
 
         result = geracao_resumo(entrada)
+        print(result)
 
         try:
             json_result = parse_llm_json(result)
@@ -120,5 +123,5 @@ def generate_summary():
         print(e)
         return jsonify({"error": e}), 500
     
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+"""if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)"""
