@@ -59,19 +59,22 @@ def geracao_resumo(user_prompt):
                     Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato DD/MM/YYYY DENTRO do campo de DATA. 
                     Se o ano não for explícito, use o ano atual (2025).
                     Para categorizar um lembrete, busque por mensagens que evoquem eventos no futuro próximo como:
-
-                    Exemplos de datas inválidas:
-
-                        - '[Na próxima Segunda] (data inválida), [haverá prova.] (descrição)'
-                        - '[Amanhã] (data) [eu irei para um congresso e ficarei fora até dia 26] (descrição)'
-                        - '[Próximo mês] (data), [ocorrerá a Semana Universitária] (descrição), não faltem'
                     
                     Exemplos de datas válidas:
 
-                        - '[Dia 25 de Dezembro / 25/12] (data válida. esperado (25/12/2025)), [será feriado.] (descrição), então não haverá aula.'
+                        - '[25/12] (data válida. esperado (25/12/2025)): [será feriado] (descrição), então não haverá aula.'
                         - '[16 de Novembro / 16/11] (data válida. esperado (16/11/2025)) [eu irei para um congresso e ficarei fora até dia 26] (descrição. Segunda data é opcional.)'
                         - '[14 de Maio de 2026 / 14/05] (data válida, esperado (14/05/2026)), celebrarei 50 anos de casamento, por isso [não haverá aula] (descrição)'
-                        Você DEVE formatar a data para qualquer tipo de expressão que se refira a uma data.
+                    
+                    **IMPORTANTE:**
+                    Caso o conteúdo enviado esteja em formato de lista, cronograma, calendário, tabela de eventos, agenda de aulas ou sequência de datas, 
+                    cada linha contendo uma ou mais datas deve ser interpretada como um lembrete separado.
+
+                    - Se houver duas datas na mesma linha (ex: “11/11 e 13/11”), gere dois lembretes idênticos, variando apenas a data.  
+                    - O título do lembrete deve ser o texto imediatamente após a data (ex: “Aula de Arquitetura”, “Entrega do Projeto”, “Apresentação Final” etc.).  
+                    - A descrição pode ser gerada com base no contexto geral do material (ex: “Atividade de entrega”, “Aula de revisão”, “Apresentação de resultados”).  
+                    - Sempre que uma linha contiver uma data, gere um lembrete, mesmo que não haja verbo ou contexto narrativo.  
+                    - Interprete expressões como “Calendário”, “Cronograma”, “Agenda”, “Planejamento” como indícios de que o texto é uma lista de eventos com datas.
 
                     Na área de lembretes, caso não haja nenhum lembrete relevante dento do conteúdo analisado, mantenha o campo lembrete como um campo vazio. Ex: "lembretes": {{}}. 
                     Essa área de lembretes é estritamente para anúncios feitos em aula ou no material e não tem haver diretamente com o conteúdo do resumo.
@@ -95,9 +98,11 @@ def conversar(conteudo:str):
     response = chain.invoke({})
     return response.content
 
-entrada = "07 - Arquitetura Computadores - Entrada e saida (1).pdf"
+arquivo = "UECE-CC-Sem 2025.2-Extensão 3-Regras do Jogo (1).pptx"
+entrada = pdf2md_extractor(arquivo)
 result = geracao_resumo(entrada)
-print(parse_llm_json(result))
+
+#Lembrete precisamos PROCESSAR OS DADOS EM  (pdf2md_extractor ou mp2text_extractor) para evitar erros na leitura
 @app.route("/generate", methods=["GET"])
 def generate_summary():
     
@@ -123,5 +128,5 @@ def generate_summary():
         print(e)
         return jsonify({"error": e}), 500
     
-"""if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)"""
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
