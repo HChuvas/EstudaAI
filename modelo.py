@@ -92,7 +92,7 @@ def geracao_resumo(user_prompt):
 
     return output.content
 
-def conversar(conteudo:str):
+def conversar_com_llm(conteudo:str):
     prompt = ChatPromptTemplate.from_template(conteudo)
     chain = prompt | llm
     response = chain.invoke({})
@@ -124,6 +124,22 @@ def generate_summary():
         
         return jsonify(json_result)
 
+    except Exception as e:
+        print(e)
+        return jsonify({"error": e}), 500
+    
+@app.route("/chat", methods=["POST"])
+def chat():
+    try:
+        data = request.get_json()
+
+        if not data or 'texto' not in data:
+            return jsonify({"erro": "Envie uma mensagem. Campo 'mensagem' obrigatório."}), 400
+        
+        text = data['texto']
+        response = conversar_com_llm(text)
+
+        return jsonify({"resposta": response})
     except Exception as e:
         print(e)
         return jsonify({"error": e}), 500
