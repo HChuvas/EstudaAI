@@ -56,7 +56,7 @@ def geracao_resumo(user_prompt):
                     Não gere NENHUM MARKDOWN, somente como ***STRING PADRÃO***
                     Lembretes consistem de anúncios feitos dentro do conteúdo marcando datas. 
                     No caso de não haver anúncio EXPLÍCITO da data deixe o campo DATA VAZIO ("").
-                    Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato YYYY-MM-DDTHH:mm:ss.sss (FORMATO ISO) DENTRO do campo de DATA. 
+                    Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato YYYY-MM-DDTHH:mm:ss.sssZ (FORMATO ISO) DENTRO do campo de DATA. 
                     Caso o horário não seja especificado, PREENCHA O HORÁRIO COM O HORÁRIO PADRÃO (00:00:00.000)
                     Se o ano não for explícito, use o ano atual (2025).
                     Para categorizar um lembrete, busque por mensagens que evoquem eventos no futuro próximo como:
