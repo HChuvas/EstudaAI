@@ -56,15 +56,16 @@ def geracao_resumo(user_prompt):
                     Não gere NENHUM MARKDOWN, somente como ***STRING PADRÃO***
                     Lembretes consistem de anúncios feitos dentro do conteúdo marcando datas. 
                     No caso de não haver anúncio EXPLÍCITO da data deixe o campo DATA VAZIO ("").
-                    Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato DD/MM/YYYY DENTRO do campo de DATA. 
+                    Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato YYYY-MM-DDTHH:mm:ss.sss (FORMATO ISO) DENTRO do campo de DATA. 
+                    Caso o horário não seja especificado, PREENCHA O HORÁRIO COM O HORÁRIO PADRÃO (00:00:00.000)
                     Se o ano não for explícito, use o ano atual (2025).
                     Para categorizar um lembrete, busque por mensagens que evoquem eventos no futuro próximo como:
                     
                     Exemplos de datas válidas:
 
-                        - '[25/12] (data válida. esperado (25/12/2025)): [será feriado] (descrição), então não haverá aula.'
-                        - '[16 de Novembro / 16/11] (data válida. esperado (16/11/2025)) [eu irei para um congresso e ficarei fora até dia 26] (descrição. Segunda data é opcional.)'
-                        - '[14 de Maio de 2026 / 14/05] (data válida, esperado (14/05/2026)), celebrarei 50 anos de casamento, por isso [não haverá aula] (descrição)'
+                        - '[25/12] (data válida.): [será feriado] (descrição), então não haverá aula.'
+                        - '[16 de Novembro / 16/11] (data válida.) [eu irei para um congresso e ficarei fora até dia 26] (descrição. Segunda data é opcional.)'
+                        - '[14 de Maio de 2026 / 14/05] (data válida.), celebrarei 50 anos de casamento, por isso [não haverá aula] (descrição)'
                     
                     **IMPORTANTE:**
                     Caso o conteúdo enviado esteja em formato de lista, cronograma, calendário, tabela de eventos, agenda de aulas ou sequência de datas, 
