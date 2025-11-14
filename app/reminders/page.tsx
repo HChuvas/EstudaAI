@@ -191,7 +191,7 @@ export default function Page() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl w-96 shadow-lg">
             <div className="bg-[#098842] rounded-t-xl p-6">
               <div className="flex justify-between items-center">
@@ -219,7 +219,7 @@ export default function Page() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#686464] mb-2">
-                    Título *
+                    Título (obrigatório)
                   </label>
                   <input
                     type="text"
