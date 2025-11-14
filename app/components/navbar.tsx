@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 
-export default function Navbar() {
+export function Navbar() {
     return(
         <div className="flex justify-between bg-white px-6 py-4 text-[#494949] drop-shadow">
-                <Link href="/" className="flex items-center gap-3">
+                <Link href="/homepage" className="flex items-center gap-3">
                     <Image 
                         src="/imagens/chapeu.svg"
                         width={30}

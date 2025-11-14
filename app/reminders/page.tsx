@@ -1,7 +1,7 @@
 "use client";
-
 import Image from "next/image";
 import { useState } from "react";
+import { Navbar } from "../components/navbar";
 
 type Reminder = {
   id: number;
@@ -86,6 +86,9 @@ export default function Page() {
   };
 
   return (
+    <div className="w-screen min-h-screen">
+      <Navbar/> 
+    
     <div className="w-screen min-h-screen bg-white pt-2 pl-8">
       <div className="font-medium text-[#686464]">
         <h1 className="text-2xl py-10 underline decoration-[#098842]/85">
@@ -191,7 +194,7 @@ export default function Page() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl w-96 shadow-lg">
             <div className="bg-[#098842] rounded-t-xl p-6">
               <div className="flex justify-between items-center">
@@ -268,5 +271,6 @@ export default function Page() {
         </div>
       )}
     </div>
+  </div>
   );
 }
