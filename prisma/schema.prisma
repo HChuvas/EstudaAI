@@ -64,6 +64,7 @@ model Topic {
 
 model Message {
   id       Int    @id @default(autoincrement())
+  created_at DateTime @default(now())
   userId   Int?
   topic_id Int
   content  String

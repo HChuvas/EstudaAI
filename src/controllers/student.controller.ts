@@ -3,6 +3,7 @@ import { CreateReminderSchema, CreateUserRequestSchema } from "../schemas/UsersR
 import { studentService } from "../services/student.service.js"
 import { userService } from "../services/user.service.js"
 import { prisma } from "../database/index.js"
+import axios from "axios"
 
 export const registerStudent = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -51,15 +52,14 @@ export const createReminder = async (req: Request, res: Response, next: NextFunc
     try {
         const userId = Number(req.auth?.id)
         const { title, description, due_date } = CreateReminderSchema.parse(req.body)
-        const reminderData: { title: string; description: string; userId: number; due_date?: Date } = {
-            title,
-            description,
-            userId,
+        const reminderData: Lembrete = {
+            titulo: title,
+            descricao: description
           };
         if (due_date) {
-            reminderData.due_date = new Date(due_date);
+            reminderData.data = new Date(due_date);
         }
-        const reminder = await studentService.createReminderService(reminderData)
+        const reminder = await studentService.createReminderService(userId, reminderData)
         res.status(201).json(reminder)
     } catch (error) {
         next(error)
@@ -82,6 +82,18 @@ export const getSubjects = async (req: Request, res: Response, next: NextFunctio
         const userId = Number(req.auth?.id)
         const subjects = await studentService.getSubjectsService(userId)
         res.status(201).json(subjects)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getAISummaryAndReminders = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = Number(req.auth?.id)
+        const topicId = Number(req.body.topicId)
+        const aiResponse = await axios.get("http://127.0.0.1:5000/generate")
+        studentService.processJSONService(userId, topicId, aiResponse.data)
+        res.status(200).json()
     } catch (error) {
         next(error)
     }

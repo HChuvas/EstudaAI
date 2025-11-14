@@ -24,14 +24,14 @@ class StudentService {
         return reminders
     }
 
-    async createReminderService(reminderData: {userId: number, title: string, description: string, due_date?: Date}) {
+    async createReminderService(userId: number, reminderData: Lembrete) {
         const reminder = await prisma.reminder.create({
             data: {
-                title: reminderData.title,
-                description: reminderData.description,
-                due_date: reminderData.due_date ?? null,
+                title: reminderData.titulo,
+                description: reminderData.descricao,
+                due_date: reminderData.data ?? null,
                 user: {
-                    connect: { id: reminderData.userId }
+                    connect: { id: userId }
                 }
             }
         })
@@ -59,6 +59,35 @@ class StudentService {
 
         return subjects
     }
+
+    async processJSONService(userId: number, topicId: number, json: RespostaIA) {
+        const summary = json.resumo
+        const lembretes = json.lembretes    
+        if (lembretes) {
+            for (const [key, lembrete] of Object.entries(lembretes)) {
+                const title = lembrete.titulo
+                const description = lembrete.descricao
+                const date = lembrete.data
+                this.createReminderService(userId, lembrete)
+            }
+        }
+        this.createSummaryService(topicId, summary)
+    }
+
+    async createSummaryService(topicId: number, summary: Resumo) {
+        const newSummary = await prisma.summary.create({
+            data: {
+                title: summary.título,
+                content: summary.conteúdo,
+                topic: {
+                    connect: { id: topicId }
+                }
+            }
+        })
+
+        return newSummary
+    }
+
 }
 
 export const studentService = new StudentService()
