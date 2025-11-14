@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link';
-import { Background } from '../components/background';
+import { Background } from '../components/background/background';
 import { useState } from 'react';
 import { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';

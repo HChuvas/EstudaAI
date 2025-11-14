@@ -1,152 +1,122 @@
-"use client";
+'use client'
+import Link from 'next/link';
+import { useState } from 'react';
+import { Background } from './components/background/background';
+import {FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 
-const disciplinasIniciais = [
-  { id: "estrutura-de-dados", nome: "Estrutura de Dados" },
-  { id: "poo", nome: "Programação Orientada a Objetos" },
-  { id: "aps", nome: "Análise e Projeto de Software" },
-  { id: "algebra-linear", nome: "Álgebra Linear" }
-];
-
-export default function HomePage() {
+export default function Login() {
   const router = useRouter();
-  const [disciplinas, setDisciplinas] = useState(disciplinasIniciais);
-  const [showModal, setShowModal] = useState(false);
-  const [novaDisciplina, setNovaDisciplina] = useState("");
+  const [credenciais, setCredenciais] = useState({
+    email: '',
+    senha: ''
+  });
+  const [erro, setErro] = useState('');
+  const [entrando, setEntrando] = useState(false);
 
-  const adicionarDisciplina = () => {
-    if (novaDisciplina.trim()) {
-      const novaDisciplinaObj = {
-        id: novaDisciplina.toLowerCase().replace(/\s+/g, '-'),
-        nome: novaDisciplina
-      };
-      
-      setDisciplinas([...disciplinas, novaDisciplinaObj]);
-      setNovaDisciplina("");
-      setShowModal(false);
-      
-      // Redireciona para a página da nova disciplina
-      router.push(`/grupos/${novaDisciplinaObj.id}`);
-    }
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setEntrando(true);
+    setErro('');
   };
 
-  return (
-    <div className="flex min-w-screen min-h-screen bg-white text-[#494949]">
-      <div className="w-72 bg-[#C2DFC0] border-r border-[#098842] drop-shadow h-screen p-6 flex flex-col">
-        <div className="mb-8">
-          <h1 className="text-2xl font-normal text-center">Disciplinas</h1>
-        </div>
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCredenciais(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (erro) setErro('');
+  };
+    /*try {
+
+      const usuarioCadastrado = JSON.parse(
+        localStorage.getItem('usuarioCadastrado') || '[]'
+      );
+
+      // Verifica se existe usuário com esse email e senha
+      const usuarioEncontrado = usuarioCadastrado.find(
+        (user: any) => user.email === credenciais.email && user.senha === credenciais.senha
+      );
+
+      if (usuarioEncontrado) {
+        console.log('Login bem-sucedido!', usuarioEncontrado);
         
-        <div className="overflow-y-auto pr-2 flex-1" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-          <nav className="space-y-6">
-            {disciplinas.map((disciplina) => (
-              <Link 
-                key={disciplina.id}
-                href={`/grupos/${disciplina.id}`}
-                className="block p-3 bg-[#098842] text-white hover:bg-white hover:text-[#098842] rounded-xl whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {disciplina.nome}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        // Salva que usuário está logado
+        localStorage.setItem('usuarioLogado', JSON.stringify(usuarioEncontrado));
+        
+        router.push('/');
+      } else {
+        setErro('E-mail ou senha incorretos');
+      }
+    } catch (error) {
+      setErro('Erro ao fazer login');
+    } finally {
+      setEntrando(false);
+    }
+  };*/
 
-        <div className="mt-6">
-          <button className="flex items-center gap-3 p-3 w-1/2 border border-[#098842] bg-[#F5F5F5] hover:text-red-600 rounded-xl cursor-pointer">
-            <Image 
-              src="/imagens/sair.svg"
-              width={20}
-              height={20}
-              alt="Sair"
-            />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4">
-            <Image 
-              src="/imagens/livro.svg"
-              width={200}
-              height={200}
-              alt="Livro"
-              className="mx-auto"
-            />
-          </div>
+  return (
+    <Background>
+      <main className="w-full max-w-md flex flex-col justify-center items-center mx-auto h-full">
+        <div className="mb-8 w-full">
+          <h2 className="text-[#494949] text-4xl font-bold text-center mb-16">
+            Login
+          </h2>
           
-          <button 
-            onClick={() => setShowModal(true)}
-            className="mb-4 cursor-pointer hover:opacity-80"
-          >
-            <Image 
-              src="/imagens/add.svg"
-              width={40}
-              height={40}
-              alt="Adicionar Disciplina"
-              className="mx-auto"
-            />
-          </button>
-          <p className="text-xl">Adicionar Disciplina</p>
-        </div>
-      </div>
-
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl w-96 shadow-lg">
-            <div className="bg-[#098842] rounded-t-xl p-6">
-              <div className="flex justify-between items-center">
-                <div className="w-6 h-6"></div>
-                
-                <h2 className="text-xl font-semibold text-white text-center flex-1">
-                  Criar Disciplina
-                </h2>
-                
-                <button 
-                  onClick={() => setShowModal(false)}
-                >
-                  <Image 
-                    src="/imagens/X-branco.svg"
-                    width={16}
-                    height={16}
-                    alt="Fechar"
-                  />
-                </button>
+          <form onSubmit={handleSubmit}>
+            {erro && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 text-sm">
+                {erro}
               </div>
-            </div>
+            )}
             
-            <div className="p-6">
-              <div className="mb-6">
-                <input
-                  type="text"
-                  value={novaDisciplina}
-                  onChange={(e) => setNovaDisciplina(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#098842] focus:border-transparent"
-                  placeholder="Digite o nome da disciplina"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      adicionarDisciplina();
-                    }
-                  }}
-                />
-              </div>
-
-              <button
-                onClick={adicionarDisciplina}
-                className="w-full py-3 bg-[#098842] text-white rounded-lg hover:bg-[#098842]/90 font-medium"
-                disabled={!novaDisciplina.trim()}
-              >
-                Criar Disciplina
-              </button>
-            </div>
-          </div>
+            <input 
+              type="email" 
+              name="email"
+              placeholder="E-mail" 
+              value={credenciais.email}
+              onChange={handleChange}
+              className="text-[#494949] w-full border-2 border-[#818181] rounded-lg px-4 py-3 mb-6 focus:outline-none focus:border-[#494949]"
+              required
+            />
+            
+            <input 
+              type="password" 
+              name="senha"
+              placeholder="Senha" 
+              value={credenciais.senha}
+              onChange={handleChange}
+              className="text-[#494949] w-full border-2 border-[#818181] rounded-lg px-4 py-3 mb-8 focus:outline-none focus:border-[#494949]"
+              required
+            />
+            
+            <button 
+              type="submit"
+              disabled={entrando}
+              className="w-full bg-[#098842] text-white rounded-lg px-4 py-3 font-bold border border-[#3B3434] hover:bg-[#087c3a] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {entrando ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
         </div>
-      )}
-    </div>
+
+        <div className="text-center w-full">
+          <p className="mb-4">
+            <Link href="/forgot-password" className="text-[#494949] text-sm font-montserrat hover:text-[#098842] transition-colors">
+              Esqueceu a senha?
+            </Link>
+          </p>
+
+          <p className="text-[#494949] text-sm">
+            Ainda não possui uma conta?{' '}
+            <Link href="/cadastro" className="text-[#098842] font-bold hover:text-[#087c3a] transition-colors">
+              Cadastre-se
+            </Link>
+          </p>
+        </div>
+      </main>
+    </Background>
   );
 }
