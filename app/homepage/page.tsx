@@ -30,7 +30,7 @@ export default function HomePage() {
       setShowModal(false);
       
       // Redireciona para a página da nova disciplina
-      router.push(`/grupos/${novaDisciplinaObj.id}`);
+      //router.push(`/grupos/${novaDisciplinaObj.id}`);
     }
   };
 

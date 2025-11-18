@@ -1,127 +1,125 @@
 'use client'
-import Link from 'next/link';
-import { Background } from '../components/background/background';
-import { useState } from 'react';
-import { FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 
-interface FormaCerta  {
-  nome: string;
-  email: string;
-  senha: string;
-  confirmarSenha: string;
+import Link from 'next/link'
+import { Background } from '../components/background/background'
+import { useState } from 'react'
+import { FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
+
+interface FormaCerta {
+  nome: string
+  email: string
+  senha: string
+  confirmarSenha: string
 }
 
 interface FormaErrada {
-  nome?: string;
-  email?: string;
-  senha?: string;
-  confirmarSenha?: string;
+  nome?: string
+  email?: string
+  senha?: string
+  confirmarSenha?: string
 }
 
-export default function Cadastro(){
-  const router = useRouter();
+export default function Cadastro() {
+  const router = useRouter()
 
   const [formaCerta, setFormaCerta] = useState<FormaCerta>({
     nome: '',
     email: '',
     senha: '',
     confirmarSenha: '',
-  });
+  })
 
-  const [formaErrada, setFormaErrada] = useState<FormaErrada>({});
-  const [cadastrando, setCadastrando] = useState(false);
+  const [formaErrada, setFormaErrada] = useState<FormaErrada>({})
+  const [cadastrando, setCadastrando] = useState(false)
 
-  // verifica se os dados estão de acordo com o que foi fornecido
   const validainfo = (): boolean => {
-    const erros: FormaErrada = {};
+    const erros: FormaErrada = {}
 
     if (!formaCerta.nome.trim()) {
-      erros.nome = 'O nome é obrigatório.';
+      erros.nome = 'O nome é obrigatório.'
     }
 
     if (!formaCerta.email) {
-      erros.email = 'O e-mail é obrigatório.';
-    } else if (!/\S+@\S+\.\S+/.test(formaCerta.email)) {  
-      erros.email = 'O e-mail é inválido.';
+      erros.email = 'O e-mail é obrigatório.'
+    } else if (!/\S+@\S+\.\S+/.test(formaCerta.email)) {
+      erros.email = 'O e-mail é inválido.'
     }
 
     if (!formaCerta.senha) {
-      erros.senha = 'A senha é obrigatória.';
+      erros.senha = 'A senha é obrigatória.'
     } else if (formaCerta.senha.length < 8) {
-      erros.senha = 'A senha deve ter pelo menos 8 caracteres.';
+      erros.senha = 'A senha deve ter pelo menos 8 caracteres.'
     }
 
     if (formaCerta.confirmarSenha !== formaCerta.senha) {
-      erros.confirmarSenha = 'As senhas não coincidem.';
-    }   
+      erros.confirmarSenha = 'As senhas não coincidem.'
+    }
 
-    setFormaErrada(erros);
-    return Object.keys(erros).length === 0;
+    setFormaErrada(erros)
+    return Object.keys(erros).length === 0
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormaCerta({
       ...formaCerta,
       [name]: value,
-    });
-    
+    })
     
     if (formaErrada[name as keyof FormaErrada]) {
       setFormaErrada({
         ...formaErrada,
         [name]: undefined,
-      });
+      })
     }
   }
-const handleSubmit = async (e: FormEvent) => {  
-  e.preventDefault();
 
-  if (!validainfo()) {
-    return;
-  }
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
 
-  setCadastrando(true); //carregando o cadastro, quaando ocultei o try,catch e finally ele apenas n foi
+    if (!validainfo()) {
+      return
+    }
+
+    setCadastrando(true)
 
     try {
-      console.log('Formulário enviado com sucesso:', formaCerta);
-      //verificar pq a mensagem não está retornando
-      router.push('/login');
+      // Salvar no localStorage
+      const usuariosExistentes = JSON.parse(
+        localStorage.getItem('usuarioCadastrado') || '[]'
+      )
+
+      // Verifica se o email já está cadastrado
+      const usuarioExistente = usuariosExistentes.find(
+        (user: any) => user.email === formaCerta.email
+      )
+
+      if (usuarioExistente) {
+        setFormaErrada({ email: 'Este e-mail já está cadastrado.' })
+        return
+      }
+
+      const novoUsuario = {
+        nome: formaCerta.nome,
+        email: formaCerta.email,
+        senha: formaCerta.senha,
+      }
+
+      const todosUsuarios = [...usuariosExistentes, novoUsuario]
+      localStorage.setItem('usuarioCadastrado', JSON.stringify(todosUsuarios))
+
+      console.log('Cadastro bem-sucedido:', novoUsuario)
+      
+      // Redireciona para a rota "/" (login)
+      router.push('/')
     } catch (error) {
-      console.error('Erro no cadastro:', error);
-      //mensagem tb n retorna erro, apenas não cadastra
+      console.error('Erro no cadastro:', error)
+      setFormaErrada({ email: 'Erro ao realizar cadastro. Tente novamente.' })
     } finally {
-      setCadastrando(false);
+      setCadastrando(false)
     }
-  };
-
-  /*try {
-    // 🆕 ADICIONE ESTAS LINhas - Salvar no localStorage
-    const usuariosExistentes = JSON.parse(
-      localStorage.getItem('usuariosCadastrados') || '[]'
-    );
-
-    const novoUsuario = {
-      nome: formaCerta.nome,
-      email: formaCerta.email,
-      senha: formaCerta.senha
-    };
-
-    const todosUsuarios = [...usuariosExistentes, novoUsuario];
-    localStorage.setItem('usuariosCadastrados', JSON.stringify(todosUsuarios));
-    // 🆕 FIM DAS LINHAS NOVAS
-
-    console.log('Formulário enviado com sucesso:', formaCerta);
-    console.log('Usuário salvo no localStorage:', novoUsuario);
-    
-    router.push('/login');
-  } catch (error) {
-    console.error('Erro no cadastro:', error);
-  } finally {
-    setCadastrando(false);
   }
-};*/
 
   return (
     <Background>
@@ -148,7 +146,6 @@ const handleSubmit = async (e: FormEvent) => {
               )}
             </div>
             
-            {/* Campo Email */}
             <div className="mb-6">
               <input
                 type="email"    
@@ -197,7 +194,6 @@ const handleSubmit = async (e: FormEvent) => {
               )}
             </div>
             
-            {/* Botão de Cadastrar */}
             <button 
               type="submit"
               disabled={cadastrando}
@@ -218,5 +214,5 @@ const handleSubmit = async (e: FormEvent) => {
         </div>
       </main>
     </Background>
-  );
+  )
 }

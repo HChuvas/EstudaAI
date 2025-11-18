@@ -1,61 +1,61 @@
 'use client'
-import Link from 'next/link';
-import { useState } from 'react';
-import { Background } from './components/background/background';
-import {FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 
+import Link from 'next/link'
+import { useState } from 'react'
+import { Background } from './components/background/background'
+import { FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Login() {
-  const router = useRouter();
+  const router = useRouter()
   const [credenciais, setCredenciais] = useState({
     email: '',
     senha: ''
-  });
-  const [erro, setErro] = useState('');
-  const [entrando, setEntrando] = useState(false);
+  })
+  const [erro, setErro] = useState('')
+  const [entrando, setEntrando] = useState(false)
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setEntrando(true);
-    setErro('');
-  };
+    e.preventDefault()
+    setEntrando(true)
+    setErro('')
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCredenciais(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (erro) setErro('');
-  };
-    /*try {
-
+    try {
       const usuarioCadastrado = JSON.parse(
         localStorage.getItem('usuarioCadastrado') || '[]'
-      );
+      )
 
       // Verifica se existe usuário com esse email e senha
       const usuarioEncontrado = usuarioCadastrado.find(
         (user: any) => user.email === credenciais.email && user.senha === credenciais.senha
-      );
+      )
 
       if (usuarioEncontrado) {
-        console.log('Login bem-sucedido!', usuarioEncontrado);
+        console.log('Login bem-sucedido!', usuarioEncontrado)
         
         // Salva que usuário está logado
-        localStorage.setItem('usuarioLogado', JSON.stringify(usuarioEncontrado));
+        localStorage.setItem('usuarioLogado', JSON.stringify(usuarioEncontrado))
         
-        router.push('/');
+        // Redireciona para a homepage
+        router.push('/homepage')
       } else {
-        setErro('E-mail ou senha incorretos');
+        setErro('E-mail ou senha incorretos')
       }
     } catch (error) {
-      setErro('Erro ao fazer login');
+      setErro('Erro ao fazer login')
     } finally {
-      setEntrando(false);
+      setEntrando(false)
     }
-  };*/
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setCredenciais(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    if (erro) setErro('')
+  }
 
   return (
     <Background>
@@ -118,5 +118,5 @@ export default function Login() {
         </div>
       </main>
     </Background>
-  );
+  )
 }
