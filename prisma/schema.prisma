@@ -21,6 +21,7 @@ model User {
   materials            Material[]
   messages             Message[]
   reminders            Reminder[]
+  study_plans StudyPlan[]
   student              Student?
   teacher              Teacher?
 }
@@ -50,6 +51,7 @@ model Subject {
   userId Int
   name   String
   user   User    @relation(fields: [userId], references: [id])
+  study_plans StudyPlan[]
   topics Topic[]
 }
 
@@ -97,5 +99,52 @@ model Transcript {
   topicId Int
   title String
   content String
+
   topic Topic @relation(fields: [topicId], references: [id])
+}
+
+model StudyPlan {
+  id Int @id @default(autoincrement())
+  userId Int
+  discipline_id Int
+  title String
+  created_at DateTime @default(now())
+  roadmap String
+  justifications String
+  complementary_materials String
+
+  user User @relation(fields: [userId], references: [id])
+  subject Subject @relation(fields: [discipline_id], references: [id]) 
+  study_plan_topics StudyPlanTopics[]
+  study_plans_expanded StudyPlanExpanded[]
+  study_plans_complementary StudyPlanComplementary[]
+}
+
+model StudyPlanTopics {
+  id Int @id @default(autoincrement())
+  plan_id Int
+  title String
+  order_index Int
+
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
+}
+
+model StudyPlanExpanded {
+  id Int @id @default(autoincrement())
+  plan_id Int
+  topic_title String @db.VarChar(50)
+  justification String @db.VarChar(100)
+  order_index Int
+
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
+}
+
+model StudyPlanComplementary {
+  id Int @id @default(autoincrement())
+  plan_id Int
+  topic_title String @db.VarChar(50)
+  description String @db.VarChar(100)
+  order_index Int
+
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
 }
