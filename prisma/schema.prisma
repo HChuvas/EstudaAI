@@ -118,6 +118,7 @@ model StudyPlan {
   study_plan_topics StudyPlanTopics[]
   study_plans_expanded StudyPlanExpanded[]
   study_plans_complementary StudyPlanComplementary[]
+  study_plans_checklist StudyPlanChecklist?
 }
 
 model StudyPlanTopics {
@@ -145,6 +146,16 @@ model StudyPlanComplementary {
   topic_title String @db.VarChar(50)
   description String @db.VarChar(100)
   order_index Int
+
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
+}
+
+model StudyPlanChecklist {
+  id Int @id @default(autoincrement())
+  plan_id Int @unique
+  title String @db.VarChar(30)
+  description String @db.VarChar(30)
+  completed Boolean @default(false)
 
   study_plan StudyPlan @relation(fields: [plan_id], references: [id])
 }
