@@ -59,6 +59,7 @@ model Topic {
   title         String    @default("")
   materials     Material[]
   summaries     Summary[]
+  transcript Transcript[]
   subject    Subject @relation(fields: [subject_id], references: [id])
 }
 
@@ -89,4 +90,12 @@ model Material {
   topic_id  Int
   topic     Topic  @relation(fields: [topic_id], references: [id])
   user      User   @relation(fields: [userId], references: [id])
+}
+
+model Transcript {
+  id Int @id @default(autoincrement())
+  topicId Int
+  title String
+  content String
+  topic Topic @relation(fields: [topicId], references: [id])
 }

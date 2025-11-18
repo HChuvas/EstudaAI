@@ -2,7 +2,6 @@ import type { NextFunction, Request, Response } from "express"
 import { CreateReminderSchema, CreateUserRequestSchema } from "../schemas/UsersRequestSchema.js"
 import { studentService } from "../services/student.service.js"
 import { userService } from "../services/user.service.js"
-import { prisma } from "../database/index.js"
 import axios from "axios"
 
 export const registerStudent = async (req: Request, res: Response, next: NextFunction) => {
