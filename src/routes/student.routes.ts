@@ -11,7 +11,7 @@ studentRouter.get("/reminders", authMiddleware, getReminders)
 studentRouter.post("/reminders/create", authMiddleware, createReminder)
 studentRouter.post("/subjects/create", authMiddleware, createSubject)
 studentRouter.get("/subjects", authMiddleware, getSubjects)
-studentRouter.get("/llm/generate", authMiddleware, getAISummaryAndReminders)
+studentRouter.post("/llm/generate", authMiddleware, getAISummaryAndReminders)
 studentRouter.post("/materials/upload", authMiddleware, upload.array("files"), uploadMaterials)
 
 export default studentRouter

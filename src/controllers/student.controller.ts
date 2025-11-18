@@ -65,6 +65,24 @@ export const createReminder = async (req: Request, res: Response, next: NextFunc
     }
 }
 
+export const createReminderAlt = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = Number(req.auth?.id)
+        const { title, description, due_date } = CreateReminderSchema.parse(req.body.l)
+        const reminderData: Lembrete = {
+            titulo: title,
+            descricao: description
+          };
+        if (due_date) {
+            reminderData.data = new Date(due_date);
+        }
+        const reminder = await studentService.createReminderService(userId, reminderData)
+        res.status(201).json(reminder)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const createSubject = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = Number(req.auth?.id)
@@ -91,8 +109,21 @@ export const getAISummaryAndReminders = async (req: Request, res: Response, next
         const userId = Number(req.auth?.id)
         const topicId = Number(req.body.topicId)
         const aiResponse = await axios.get("http://127.0.0.1:5000/generate")
-        studentService.processJSONService(userId, topicId, aiResponse.data)
-        res.status(200).json()
+        // res.status(200).json(aiResponse)
+
+        const result = await studentService.processJSONService(userId, topicId, aiResponse.data)
+        res.status(200).json(result)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const createSummary = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = req.body.aiResponse.resumo
+        const topicId = req.body.topicId
+        const summary = await studentService.createSummaryService(topicId, data)
+        res.status(201).json(summary)
     } catch (error) {
         next(error)
     }
