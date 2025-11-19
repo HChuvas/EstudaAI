@@ -145,3 +145,14 @@ export const uploadMaterials = async (req: Request, res: Response, next: NextFun
         next(error)
     }
 }
+
+export const sendMaterialsToLLM = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topicId = Number(req.body.topicId)
+        const materialUrls = await studentService.getTopicMaterials(topicId)
+        axios.post("http://127.0.0.1:5000/materials", materialUrls)
+        res.status(200).json(materialUrls)
+    } catch (error) {
+        next(error)
+    }
+}

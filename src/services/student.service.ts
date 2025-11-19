@@ -129,6 +129,15 @@ class StudentService {
 
        return Promise.all(uploads)
     }
+
+    async getTopicMaterials(topicId: number) {
+        const materialUrls = await prisma.material.findMany({
+            where: { topic_id: topicId },
+            select: { file_path: true }
+        })
+
+        return materialUrls
+    }
 }
 
 export const studentService = new StudentService()
