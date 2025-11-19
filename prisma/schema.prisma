@@ -90,6 +90,8 @@ model Material {
   file_path String
   userId    Int
   topic_id  Int
+
+  transcript Transcript?
   topic     Topic  @relation(fields: [topic_id], references: [id])
   user      User   @relation(fields: [userId], references: [id])
 }
@@ -97,9 +99,11 @@ model Material {
 model Transcript {
   id Int @id @default(autoincrement())
   topicId Int
+  material_id Int @unique
   title String
   content String
 
+  material Material @relation(fields: [material_id], references: [id])
   topic Topic @relation(fields: [topicId], references: [id])
 }
 

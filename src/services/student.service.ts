@@ -138,6 +138,15 @@ class StudentService {
 
         return materialUrls
     }
+
+    async getTranscripts(topicIds: Array<number>) {
+        return Promise.all(topicIds.map(async (id) => {
+            return prisma.transcript.findMany({
+                where: { material: { topic_id:  id } },
+                select: { title: true, content: true }
+            })
+        }))
+    }
 }
 
 export const studentService = new StudentService()
