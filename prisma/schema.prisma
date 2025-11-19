@@ -109,9 +109,6 @@ model StudyPlan {
   discipline_id Int
   title String
   created_at DateTime @default(now())
-  roadmap String
-  justifications String
-  complementary_materials String
 
   user User @relation(fields: [userId], references: [id])
   subject Subject @relation(fields: [discipline_id], references: [id]) 
