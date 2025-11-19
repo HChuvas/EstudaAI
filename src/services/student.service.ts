@@ -1,4 +1,4 @@
-import { fi, type id } from "zod/locales";
+import { fi, id } from "zod/locales";
 import { supabase } from "../config/supabase.js";
 import { prisma } from "../database/index.js";
 import type { Role } from "../types/roles.js";
@@ -62,7 +62,7 @@ class StudentService {
         return subjects
     }
 
-    async processJSONService(userId: number, topicId: number, json: RespostaIA) {
+    async processSummaryRemindersJSON(userId: number, topicId: number, json: ResumosLembretesIA) {
         const summary = json.resumo
         const lembretes = json.lembretes
         const output = []    
@@ -161,6 +161,103 @@ class StudentService {
         })
 
         return topics
+    }
+
+    async processStudyPlanJSON(planData: StudyPlanResponse, userId: number, subjectId: number) {
+        const topics = planData.topics
+        const expanded = planData.expandedTopics
+        const complementary = planData.complementaryTopics
+        const checklist = planData.checklist
+        const topicsOutput = []
+        const expandedOutput = []
+        const complementaryOutput = []
+        const checklistOutput = []
+
+        const studyPlan = await this.createStudyPlan(planData.title.title, userId, subjectId)
+
+        const planId = studyPlan.id
+
+        for(const [key, topic] of Object.entries(topics)) {
+            topicsOutput.push(await this.createStudyPlanTopic(topic, planId))
+        }
+
+        for(const [key, expandedTopic] of Object.entries(expanded)) {
+            expandedOutput.push(await this.createStudyPlanExpanded(expandedTopic, planId))
+        }
+
+        for(const [key, complementaryTopic] of Object.entries(complementary)) {
+            complementaryOutput.push(await this.createStudyPlanComplementary(complementaryTopic, planId))
+        }
+
+        for(const [key, checklistItem] of Object.entries(checklist)) {
+            checklistOutput.push(await this.createStudyPlanChecklist(checklistItem, planId))
+        }
+
+        return {
+            studyPlan,
+            topicsOutput,
+            expandedOutput,
+            complementaryOutput,
+            checklistOutput
+        }
+    }
+
+    async createStudyPlan(title: string, userId: number, subjectId: number) {
+        return await prisma.studyPlan.create({
+            data: {
+                title,
+                user: { connect: { id: userId } },
+                subject: { connect: { id: subjectId }}
+            }
+        })
+    }
+
+    async createStudyPlanTopic(topic: StudyPlanTopic, planId: number) {
+        return await prisma.studyPlanTopics.create({
+            data: {
+                title: topic.title,
+                order_index: topic.orderIndex,
+                study_plan: { connect: { id: planId } }
+            }
+        })
+    }
+
+    async createStudyPlanExpanded(expanded: StudyPlanExpanded, planId: number) {
+        return await prisma.studyPlanExpanded.create({
+            data: {
+                topic_title: expanded.topicTitle,
+                order_index: expanded.orderIndex,
+                justification: expanded.justification,
+                study_plan: { connect: { id: planId } }
+            }
+        })
+    }
+
+    async createStudyPlanComplementary(complementary: StudyPlanComplementary, planId: number) {
+        return await prisma.studyPlanComplementary.create({
+            data: {
+                topic_title: complementary.title,
+                description: complementary.description,
+                order_index: complementary.orderIndex,
+                study_plan: { connect: { id: planId } }
+            }
+        })
+    }
+
+    async createStudyPlanChecklist(checklist: StudyPlanChecklistItem, planId: number) {
+        return await prisma.studyPlanChecklistItem.create({
+            data: {
+                title: checklist.title,
+                description: checklist.description,
+                study_plan: { connect: { id: planId } }
+            }
+        })
+    }
+
+    async deleteStudyPlan(planId: number) {
+        return await prisma.studyPlan.delete({
+            where: { id: planId }
+        })
     }
 }
 

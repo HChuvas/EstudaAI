@@ -10,9 +10,43 @@ declare global {
     conteúdo: string;
   }
 
-  interface RespostaIA {
+  interface ResumosLembretesIA {
     resumo: Resumo;
     lembretes?: Record<string, Lembrete>;
+  }
+
+  interface StudyPlanTitle {
+    title: string
+  }
+
+  interface StudyPlanTopic {
+    title: string,
+    orderIndex: number
+  }
+
+  interface StudyPlanExpanded {
+    topicTitle: string,
+    orderIndex: number,
+    justification: string
+  }
+
+  interface StudyPlanComplementary {
+    title: string,
+    description: string,
+    orderIndex: number
+  }
+
+  interface StudyPlanChecklistItem {
+    title: string,
+    description: string
+  }
+
+  interface StudyPlanResponse {
+    title: StudyPlanTitle,
+    topics: Record<string, StudyPlanTopic>,
+    expandedTopics: Record<string, StudyPlanExpanded>,
+    complementaryTopics: Record<string, StudyPlanComplementary>,
+    checklist: Record<string, StudyPlanChecklistItem>
   }
 }
 

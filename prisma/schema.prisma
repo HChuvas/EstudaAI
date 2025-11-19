@@ -121,7 +121,7 @@ model StudyPlan {
   study_plan_topics StudyPlanTopics[]
   study_plans_expanded StudyPlanExpanded[]
   study_plans_complementary StudyPlanComplementary[]
-  study_plans_checklist StudyPlanChecklist?
+  study_plans_checklist StudyPlanChecklistItem[]
 }
 
 model StudyPlanTopics {
@@ -153,11 +153,11 @@ model StudyPlanComplementary {
   study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
 }
 
-model StudyPlanChecklist {
+model StudyPlanChecklistItem {
   id Int @id @default(autoincrement())
-  plan_id Int @unique
-  title String @db.VarChar(30)
-  description String @db.VarChar(30)
+  plan_id Int
+  title String @db.VarChar(50)
+  description String @db.VarChar(50)
   completed Boolean @default(false)
 
   study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)

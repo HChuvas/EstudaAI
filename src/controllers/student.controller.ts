@@ -111,7 +111,7 @@ export const getAISummaryAndReminders = async (req: Request, res: Response, next
         const aiResponse = await axios.get("http://127.0.0.1:5000/generate")
         // res.status(200).json(aiResponse)
 
-        const result = await studentService.processJSONService(userId, topicId, aiResponse.data)
+        const result = await studentService.processSummaryRemindersJSON(userId, topicId, aiResponse.data)
         res.status(200).json(result)
     } catch (error) {
         next(error)
@@ -167,6 +167,25 @@ export const sendTranscriptsForStudyPlan = async (req: Request, res: Response, n
     } catch (error) {
         next(error)
     }
+}
+
+export const createStudyPlan = async (req: Request, res: Response, next: NextFunction) => {
+    const {
+        subjectId,
+        planData
+    } = req.body
+
+    const userId = Number(req.auth?.id)
+    const result = await studentService.processStudyPlanJSON(planData, userId, subjectId)
+
+    res.status(201).json(result)
+}
+
+export const deleteStudyPlan = async (req: Request, res: Response, next: NextFunction) => {
+    const planId = Number(req.query.planId)
+
+    const deletedPlan = await studentService.deleteStudyPlan(planId)
+    res.status(200).json(deletedPlan)
 }
 
 export const getSubjectTopics = async (req: Request, res: Response, next: NextFunction) => {
