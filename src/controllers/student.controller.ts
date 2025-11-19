@@ -168,3 +168,14 @@ export const sendTranscriptsForStudyPlan = async (req: Request, res: Response, n
         next(error)
     }
 }
+
+export const getSubjectTopics = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const subjectId = Number(req.query.subjectId)
+        console.log(subjectId)
+        const topics = await studentService.getSubjectTopics(subjectId)
+        res.status(200).json(topics)
+    } catch (error) {
+        next(error)
+    }
+}

@@ -1,4 +1,4 @@
-import type { id } from "zod/locales";
+import { fi, type id } from "zod/locales";
 import { supabase } from "../config/supabase.js";
 import { prisma } from "../database/index.js";
 import type { Role } from "../types/roles.js";
@@ -95,6 +95,7 @@ class StudentService {
 
 
     async uploadMaterialsService(userId: number, topicId: number, files: Express.Multer.File[]) {
+        const fileCount = files.length
         const uploads = files.map(async (file) => {
             const path = `materials/${userId}/${topicId}/${Date.now()}-${file.originalname}`
 
@@ -110,23 +111,29 @@ class StudentService {
             .from("EstudaAI%20Files")
             .getPublicUrl(path)
 
+           
+
             const newFile = await prisma.material.create({
                 data: {
                     title: file.originalname,
                     file_type: file.mimetype,
                     file_path: publicUrlData.publicUrl,
                     topic: {
-                        connect: { id: topicId }
+                        connect: { id: topicId },
+                        
                     },
                     user: {
                         connect: { id: userId }
                     }
                 }
             })
-
+            
             return newFile
         })
-
+        await prisma.topic.update({
+            where: { id: topicId },
+            data: { material_count: { increment: fileCount } }
+        })
        return Promise.all(uploads)
     }
 
@@ -146,6 +153,14 @@ class StudentService {
                 select: { title: true, content: true }
             })
         }))
+    }
+
+    async getSubjectTopics(subjectId: number) {
+        const topics = await prisma.topic.findMany({
+            where: { subject_id: subjectId }
+        })
+
+        return topics
     }
 }
 

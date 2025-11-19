@@ -1,6 +1,6 @@
 import express from "express"
 
-import { createReminder, createSubject, getAISummaryAndReminders, getReminders, getSubjects, registerStudent, sendMaterialsToLLM, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
+import { createReminder, createSubject, getAISummaryAndReminders, getReminders, getSubjects, getSubjectTopics, registerStudent, sendMaterialsToLLM, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
 import { authMiddleware } from "../middlewares/authmiddleware.js";
 import { upload } from "../config/multer.js";
 
@@ -17,5 +17,6 @@ studentRouter.post("/llm/generate", authMiddleware, getAISummaryAndReminders)
 studentRouter.post("/materials/upload", authMiddleware, upload.array("files"), uploadMaterials)
 studentRouter.post("/llm/materials/send", authMiddleware, sendMaterialsToLLM)
 studentRouter.post("/studyplans/create", authMiddleware, sendTranscriptsForStudyPlan)
+studentRouter.get("/subjects/topics", authMiddleware, getSubjectTopics)
 
 export default studentRouter
