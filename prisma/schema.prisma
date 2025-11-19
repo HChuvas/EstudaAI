@@ -64,7 +64,7 @@ model Topic {
   materials     Material[]
   summaries     Summary[]
   transcript Transcript[]
-  subject    Subject @relation(fields: [subject_id], references: [id])
+  subject    Subject @relation(fields: [subject_id], references: [id], onDelete: Cascade)
 }
 
 model Message {
@@ -82,7 +82,7 @@ model Summary {
   content  String
   title    String
   topic_id Int
-  topic    Topic  @relation(fields: [topic_id], references: [id])
+  topic    Topic  @relation(fields: [topic_id], references: [id], onDelete: Cascade)
 }
 
 model Material {
@@ -94,7 +94,7 @@ model Material {
   topic_id  Int
 
   transcript Transcript?
-  topic     Topic  @relation(fields: [topic_id], references: [id])
+  topic     Topic  @relation(fields: [topic_id], references: [id], onDelete: Cascade)
   user      User   @relation(fields: [userId], references: [id])
 }
 
@@ -105,8 +105,8 @@ model Transcript {
   title String
   content String
 
-  material Material @relation(fields: [material_id], references: [id])
-  topic Topic @relation(fields: [topicId], references: [id])
+  material Material @relation(fields: [material_id], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 }
 
 model StudyPlan {
@@ -117,7 +117,7 @@ model StudyPlan {
   created_at DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
-  subject Subject @relation(fields: [discipline_id], references: [id]) 
+  subject Subject @relation(fields: [discipline_id], references: [id], onDelete: Cascade) 
   study_plan_topics StudyPlanTopics[]
   study_plans_expanded StudyPlanExpanded[]
   study_plans_complementary StudyPlanComplementary[]
@@ -130,7 +130,7 @@ model StudyPlanTopics {
   title String
   order_index Int
 
-  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
 }
 
 model StudyPlanExpanded {
@@ -140,7 +140,7 @@ model StudyPlanExpanded {
   justification String @db.VarChar(100)
   order_index Int
 
-  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
 }
 
 model StudyPlanComplementary {
@@ -150,7 +150,7 @@ model StudyPlanComplementary {
   description String @db.VarChar(100)
   order_index Int
 
-  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
 }
 
 model StudyPlanChecklist {
@@ -160,5 +160,5 @@ model StudyPlanChecklist {
   description String @db.VarChar(30)
   completed Boolean @default(false)
 
-  study_plan StudyPlan @relation(fields: [plan_id], references: [id])
+  study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
 }
