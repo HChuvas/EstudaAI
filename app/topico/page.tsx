@@ -1,4 +1,5 @@
 'use client';
+import Image from "next/image";
 import { useCallback, useState } from 'react';
 import { Navbar } from "../components/navbar";
 
@@ -102,11 +103,11 @@ export default function Page() {
                 Material Original
               </h2>
               <button 
-                className="w-6 h-6 cursor-pointer" 
+                className="cursor-pointer" 
                 aria-label="Mais opções"
                 onClick={handleMaisOpcoes}
               >
-                <img src="/imagens/more.svg" alt="Mais opções"/>
+                <Image src="/imagens/more.svg" width={22} height={22} alt="Mais opções"/>
               </button>
             </span>
 
@@ -117,7 +118,7 @@ export default function Page() {
               [&::-webkit-scrollbar-thumb]:bg-[#098842]
               [&::-webkit-scrollbar-thumb]:rounded">
               <div className="flex flex-col justify-around overflow-hidden min-w-36 min-h-20 pt-3 ml-2 mb-2 border-[1.5px] border-[#098842] rounded-xl shrink-0">
-                <img src="/imagens/file.svg" className="mx-14" alt="Ícone do arquivo"/>
+                <Image src="/imagens/file.svg" width={36} height={20}  className="mx-14" alt="Ícone do arquivo"/>
                 <span className="font-montserrat font-normal text-[0.7rem] text-center text-[#098842] mx-0.5">
                   Aula_Ponteiros.MP3
                 </span>
@@ -136,7 +137,7 @@ export default function Page() {
                   aria-label={`Fechar ${conteudo.titulo}`}
                   onClick={handleFecharTranscricao}
                 >
-                  <img src="/imagens/X-pequeno.svg" alt="Fechar"/>
+                  <Image src="/imagens/X-pequeno.svg"  width={20} height={20} alt="Fechar"/>
                 </button>
               </span>
               
@@ -150,14 +151,14 @@ export default function Page() {
                   aria-label={`Atualizar ${conteudo.titulo}`}
                   onClick={handleAtualizarTranscricao}
                 >
-                  <img src="/imagens/refresh.svg" alt="Atualizar"/>
+                  <Image src="/imagens/refresh.svg" width={20} height={20} alt="Atualizar"/>
                 </button>
                 <button 
                   className="w-5 h-5 cursor-pointer" 
                   aria-label={`Renomear ${conteudo.titulo}`}
                   onClick={handleRenomearTranscricao}
                 >
-                  <img src="/imagens/editar.svg" alt="Renomear"/>
+                  <Image src="/imagens/editar.svg" width={20} height={20} alt="Renomear"/>
                 </button>
               </span>
             </div>
@@ -197,7 +198,7 @@ export default function Page() {
               onClick={handleEnviarMensagem}
               disabled={!mensagem.trim()}
             >
-              <img src="/imagens/send.svg" alt="Enviar"/>
+              <Image src="/imagens/send.svg" width={24} height={24} alt="Enviar"/>
             </button>
             <input
               type="text"
