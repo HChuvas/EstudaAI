@@ -11,6 +11,7 @@ import re
 from io import BytesIO
 from supabase import create_client, Client
 import requests
+from zipfile import ZipFile
 
 load_dotenv()
 
@@ -350,26 +351,32 @@ def chat():
         return jsonify({"error": e}), 500
 
 @app.route("/download", methods=["POST"])
-def download(filename):
+def download():
     
     data = request.json
-    file_url = data.get("file_path")
+    buffer = BytesIO()
 
-    if not file_url:
-        return jsonify({"error": "File path unknown"}), 400
-    
-    resp = requests.get(file_url, stream=True)
+    with ZipFile(buffer, "w") as zipf:
+        for obj in data:
+            path = obj.get("file_path")
 
-    if resp.status_code != 200:
-        return jsonify({"error": "Failed to fetch file"}), 500
-    
-    mem_file = BytesIO(resp.content)
-    filename = file_url.split("/")[-1]
+        if not path:
+            return jsonify({"error": "File path unknown"}), 400
+        
+        resp = requests.get(path, stream=True)
+
+        if resp.status_code != 200:
+            return jsonify({"error": "Failed to fetch file"}), 500
+        
+        filename = path.split("/")[-1]
+        zipf.writestr(filename,resp.content)
+
+    buffer.seek(0)
 
     return send_file(
-        mem_file,
+        buffer,
         as_attachment=True,
-        download_name=filename
+        download_name="arquivos.zip"
     )
 
     
