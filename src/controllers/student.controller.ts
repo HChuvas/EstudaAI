@@ -150,8 +150,8 @@ export const sendMaterialsToLLM = async (req: Request, res: Response, next: Next
     try {
         const topicId = Number(req.body.topicId)
         const materialUrls = await studentService.getTopicMaterials(topicId)
-        axios.post("http://127.0.0.1:5000/materials", materialUrls)
-        res.status(200).json(materialUrls)
+        const result = await axios.post("http://127.0.0.1:5000/download", materialUrls)
+        res.status(200).json({materialUrls, result: result.data})
     } catch (error) {
         next(error)
     }

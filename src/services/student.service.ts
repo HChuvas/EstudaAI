@@ -100,7 +100,7 @@ class StudentService {
             const path = `materials/${userId}/${topicId}/${Date.now()}-${file.originalname}`
 
             const { error } = await supabase.storage
-            .from(`EstudaAI%20Files`)
+            .from(`EstudaAI-Files`)
             .upload(path, file.buffer, {
                 contentType: file.mimetype
             })
@@ -108,7 +108,7 @@ class StudentService {
             if (error) throw new Error("Erro no upload: " + error.message)
 
             const { data: publicUrlData } = supabase.storage
-            .from("EstudaAI%20Files")
+            .from("EstudaAI-Files")
             .getPublicUrl(path)
 
            
