@@ -4,10 +4,12 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import PydanticOutputParser
 from Coletor import *
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from Estruturas import *
 import json
 import re
+from io import BytesIO
+from supabase import create_client, Client
 
 load_dotenv()
 
@@ -16,6 +18,8 @@ app = Flask(__name__)
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("API_KEY"))
 
 llm_json = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("API_KEY"), response_mime_type="application/json")
+
+supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
 
 #depreciado. código mantido para caso seja requerido futuramente.
 def parse_llm_json(response_text):
@@ -252,6 +256,17 @@ def gerar_plano_de_estudo(user_prompt):
                                                     "descricao": "Descrição resumida"
                                                 }
                                                 ...
+                                            },
+                                            "checklist": {
+                                                "topico1": {
+                                                    "titulo": "Nome do Topico",
+                                                    "Descricao": "Descricao do Topico"
+                                                },
+                                                "topico1": {
+                                                    "titulo": "Nome do Topico",
+                                                    "Descricao": "Descricao do Topico"
+                                                }
+                                                ...
                                             }
                                         }
                                     """
@@ -274,10 +289,10 @@ def generate_summary():
     
     try:
         data = request.get_json()
-        user_prompt = data.get("conteudo")
+        user_prompt = data.get("material")
 
         if not user_prompt:
-            return jsonify({"error": "Campo 'conteudo' é obrigatório"}), 400
+            return jsonify({"error": "Campo 'material' é obrigatório"}), 400
 
         result = geracao_resumo_json_mode(user_prompt)
 
@@ -293,12 +308,12 @@ def generate_summary():
         print(e)
         return jsonify({"error": e}), 500
     
-@app.route("/roadmap", methods=["GET"])
-def generate_summary():
+@app.route("/studyplan", methods=["GET"])
+def generate_study_plan():
     
     try:
         data = request.get_json()
-        user_prompt = data.get("material")
+        user_prompt = data.get("transcription")
 
         if not user_prompt:
             return jsonify({"error": "Campo 'material' é obrigatório"}), 400
@@ -332,6 +347,22 @@ def chat():
     except Exception as e:
         print(e)
         return jsonify({"error": e}), 500
+
+@app.route("/download", methods=["GET"])
+def download(filename):
+    try:
+        file_bytes = supabase.storage.from_("meu-bucket").download(filename)
+    except Exception as e:
+        return {"error": str(e)}, 500
+    
+    buffer = BytesIO(file_bytes)
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename
+    )
+
     
 # a ser feito: 
 # 1. rota para receber arquivo do back. baixar e retornar transcrição

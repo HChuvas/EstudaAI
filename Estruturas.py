@@ -25,14 +25,20 @@ class TopicoExpandido(BaseModel):
     justificativa: str
 
 class ConteudoComplementar(BaseModel):
+    indice: int
     titulo: str
     descricao: str
 
 class Plano(BaseModel):
     titulo: str
 
+class ChecklistItem(BaseModel):
+     titulo: str
+     descrical: str
+
 class SaidaPlanoDeEstudos(BaseModel):
     plano: Plano
     conteudos_prioritarios: Dict[str, TopicoSimplificado]
     topicos_expandidos: Dict[str, TopicoExpandido]
     conteudos_complementares: Dict[str, ConteudoComplementar]
+    checklist: Dict[str, ChecklistItem]
