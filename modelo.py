@@ -10,6 +10,7 @@ import json
 import re
 from io import BytesIO
 from supabase import create_client, Client
+import requests
 
 load_dotenv()
 
@@ -348,17 +349,25 @@ def chat():
         print(e)
         return jsonify({"error": e}), 500
 
-@app.route("/download", methods=["GET"])
+@app.route("/download", methods=["POST"])
 def download(filename):
-    try:
-        file_bytes = supabase.storage.from_("meu-bucket").download(filename)
-    except Exception as e:
-        return {"error": str(e)}, 500
     
-    buffer = BytesIO(file_bytes)
-    buffer.seek(0)
+    data = request.json
+    file_url = data.get("file_path")
+
+    if not file_url:
+        return jsonify({"error": "File path unknown"}), 400
+    
+    resp = requests.get(file_url, stream=True)
+
+    if resp.status_code != 200:
+        return jsonify({"error": "Failed to fetch file"}), 500
+    
+    mem_file = BytesIO(resp.content)
+    filename = file_url.split("/")[-1]
+
     return send_file(
-        buffer,
+        mem_file,
         as_attachment=True,
         download_name=filename
     )
