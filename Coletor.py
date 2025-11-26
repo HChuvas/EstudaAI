@@ -30,6 +30,8 @@ def pdf2md_extractor(file_path:str):
         return ["Sem texto reconhecido no documento"]
     return text
 
+print(pdf2md_extractor("UECE-CC-Sem 2025.2-Extensão 3-Regras do Jogo (1).pptx"))
+
 def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     file_bytes.seek(0)
     ext = filename.split(".")[-1]
