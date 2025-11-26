@@ -401,6 +401,38 @@ def download():
 
     return jsonify({"results": results}), 200
 
+@app.route("/transcript", methods=["POST"])
+def transcript_test():
+    
+    data = request.json
+    results = []
+
+    for obj in data:
+        path = obj.get("file_path")
+        material_id = obj.get("id")
+        filename = path.split("/")[-1]
+
+        if not path:
+            return jsonify({"error": "File path unknown"}), 400
+        
+        try:
+            transcricao = pdf2md_extractor(path)
+            results.append({
+                "id": material_id,
+                "filename": filename,
+                "transcription": transcricao
+            })
+        except Exception as e:
+            results.append({
+                "id": material_id,
+                "filename": filename,
+                "transcription": "" 
+            })
+            continue
+
+
+    return jsonify({"results": results}), 200
+
 
 
 

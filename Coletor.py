@@ -8,13 +8,13 @@
 #                               2: e os materiais visuais dentro de um slide
 #
 # Precisamos de Chunking dos dados para: arquivos muito longos ou muitos arquivos
-import os, whisper, transformers, tempfile
+import os, whisper, transformers
 from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter
-from io import BytesIO
 from pdfminer.high_level import extract_text
+from io import BytesIO
 #from langchain_community.embeddings import HuggingFaceEmbeddings
 
 #embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
