@@ -180,6 +180,17 @@ class StudentService {
         return topics
     }
 
+    async createTopic(subjectId: number, title: string) {
+        return await prisma.topic.create({
+            data: {
+                title,
+                subject: {
+                    connect: { id: subjectId }
+                }
+            }
+        })
+    }
+
     async processStudyPlanJSON(planData: StudyPlanResponse, userId: number, subjectId: number) {
         const topics = planData.topics
         const expanded = planData.expandedTopics

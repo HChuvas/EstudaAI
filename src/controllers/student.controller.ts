@@ -129,6 +129,17 @@ export const createSummary = async (req: Request, res: Response, next: NextFunct
     }
 }
 
+export const createTopic = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const subjectId = Number(req.body.subjectId)
+        const title = req.body.title
+        const topic = await studentService.createTopic(subjectId, title)
+        res.status(201).json(topic)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const uploadMaterials = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const files = req.files as Express.Multer.File[]
