@@ -161,7 +161,7 @@ export const sendMaterialsToLLMAndSaveTranscripts = async (req: Request, res: Re
     try {
         const topicId = Number(req.body.topicId)
         const materialUrls = await studentService.getTopicMaterials(topicId)
-        const transcripts = await axios.post("http://127.0.0.1:5000/download", materialUrls)
+        const transcripts = await axios.post("http://127.0.0.1:5000/transcript", materialUrls)
         console.log(transcripts.data.results)
         const createdTranscripts = await studentService.saveTranscripts(transcripts.data.results, topicId)
         res.status(200).json({materialUrls, transcripts: createdTranscripts})
