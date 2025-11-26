@@ -390,6 +390,7 @@ def download():
                     "filename": filename,
                     "transcription": "" 
                 })
+                continue
 
             results.append({
                 "filename": filename,
