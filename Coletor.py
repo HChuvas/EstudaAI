@@ -14,6 +14,7 @@ from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter
 from io import BytesIO
+from pdfminer.high_level import extract_text
 #from langchain_community.embeddings import HuggingFaceEmbeddings
 
 #embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -30,9 +31,7 @@ def pdf2md_extractor(file_path:str):
         return ["Sem texto reconhecido no documento"]
     return text
 
-print(pdf2md_extractor("UECE-CC-Sem 2025.2-Extensão 3-Regras do Jogo (1).pptx"))
-
-def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
+"""def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     file_bytes.seek(0)
     ext = filename.split(".")[-1]
 
@@ -52,8 +51,12 @@ def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     if not text.strip():
         return ["Sem texto reconhecido no documento"]
 
-    return text
-    
+    return text"""
+
+def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
+    file_bytes.seek(0)
+    text = extract_text(file_bytes)
+    return text    
 
 def mp2txt_extractor(file_path:str):
         
