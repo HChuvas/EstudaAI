@@ -48,6 +48,12 @@ declare global {
     complementaryTopics: Record<string, StudyPlanComplementary>,
     checklist: Record<string, StudyPlanChecklistItem>
   }
+
+  interface TranscriptResponse {
+    filename: string,
+    material_id: number,
+    transcription: string
+  }
 }
 
 export {}; // necessário para que o arquivo seja tratado como um módulo

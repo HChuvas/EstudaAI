@@ -146,12 +146,14 @@ export const uploadMaterials = async (req: Request, res: Response, next: NextFun
     }
 }
 
-export const sendMaterialsToLLM = async (req: Request, res: Response, next: NextFunction) => {
+export const sendMaterialsToLLMAndSaveTranscripts = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const topicId = Number(req.body.topicId)
         const materialUrls = await studentService.getTopicMaterials(topicId)
-        const result = await axios.post("http://127.0.0.1:5000/download", materialUrls)
-        res.status(200).json({materialUrls, result: result.data})
+        const transcripts = await axios.post("http://127.0.0.1:5000/download", materialUrls)
+        console.log(transcripts.data.results)
+        const createdTranscripts = await studentService.saveTranscripts(transcripts.data.results, topicId)
+        res.status(200).json({materialUrls, transcripts: createdTranscripts})
     } catch (error) {
         next(error)
     }

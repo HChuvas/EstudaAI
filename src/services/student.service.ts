@@ -140,7 +140,7 @@ class StudentService {
     async getTopicMaterials(topicId: number) {
         const materialUrls = await prisma.material.findMany({
             where: { topic_id: topicId },
-            select: { file_path: true }
+            select: { id: true, file_path: true }
         })
 
         return materialUrls
@@ -151,6 +151,23 @@ class StudentService {
             return prisma.transcript.findMany({
                 where: { material: { topic_id:  id } },
                 select: { title: true, content: true }
+            })
+        }))
+    }
+
+    async saveTranscripts(transcripts: Array<TranscriptResponse>, topicId: number) {
+        return Promise.all(transcripts.map(async (transcript) => {
+            return prisma.transcript.create({
+                data: {
+                    content: transcript.transcription,
+                    title: transcript.filename,
+                    topic: {
+                        connect: { id: topicId }
+                    },
+                    material: {
+                        connect: { id: transcript.material_id }
+                    }
+                }
             })
         }))
     }
