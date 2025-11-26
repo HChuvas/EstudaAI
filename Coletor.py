@@ -34,10 +34,12 @@ def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     file_bytes.seek(0)
     ext = filename.split(".")[-1]
 
+    print(ext)
+
     with tempfile.NamedTemporaryFile(delete=True, suffix=f".{ext}") as tmp:
         tmp.write(file_bytes.read())
         tmp.flush()
-
+        print(tmp.name)
         result = conversor_pdf.convert(tmp.name)
 
     text = result.document.export_to_markdown() or ""
