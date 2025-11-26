@@ -8,7 +8,7 @@
 #                               2: e os materiais visuais dentro de um slide
 #
 # Precisamos de Chunking dos dados para: arquivos muito longos ou muitos arquivos
-import os, whisper, transformers
+import os, whisper, transformers, tempfile
 from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -32,7 +32,14 @@ def pdf2md_extractor(file_path:str):
 
 def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     file_bytes.seek(0)
-    result = conversor_pdf.convert(file_bytes, filename=filename)
+    ext = filename.split(".")[-1]
+
+    with tempfile.NamedTemporaryFile(delete=True, suffix=f".{ext}") as tmp:
+        tmp.write(file_bytes.read())
+        tmp.flush()
+
+        result = conversor_pdf.convert(tmp.name)
+
     text = result.document.export_to_markdown() or ""
     if not text.strip():
         return ["Sem texto reconhecido no documento"]
