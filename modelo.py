@@ -6,11 +6,9 @@ from Coletor import *
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_file
 from Estruturas import *
-import json
-import re
+import json, re, requests, tempfile
 from io import BytesIO
 from supabase import create_client, Client
-import requests
 from zipfile import ZipFile
 
 load_dotenv()
@@ -355,21 +353,54 @@ def download():
     
     data = request.json
     buffer = BytesIO()
+    results = []
 
     with ZipFile(buffer, "w") as zipf:
         for obj in data:
             path = obj.get("file_path")
 
-        if not path:
-            return jsonify({"error": "File path unknown"}), 400
-        
-        resp = requests.get(path, stream=True)
+            if not path:
+                return jsonify({"error": "File path unknown"}), 400
+            
+            resp = requests.get(path, stream=True)
 
-        if resp.status_code != 200:
-            return jsonify({"error": "Failed to fetch file"}), 500
-        
-        filename = path.split("/")[-1]
-        zipf.writestr(filename,resp.content)
+            if resp.status_code != 200:
+                return jsonify({"error": "Failed to fetch file"}), 500
+
+            conteudo = resp.content
+            mem_file = BytesIO(conteudo)
+            filename = path.split("/")[-1]
+            #zipf.writestr(filename,resp.content)
+            ext = filename.split(".")[-1].lower() if "." in filename else ""
+
+            AUDIO_EXTS = {"mp3", "wav", "m4a", "flac", "aac", "ogg"}
+            DOC_EXTS = {"pdf", "docx", "pptx"}
+
+            try:
+                if ext in AUDIO_EXTS:
+                    #transcricao = mp2txt_extractor(mem_file)
+                    continue
+                elif ext in DOC_EXTS:
+                    transcricao = pdf2md_extractormod(mem_file)
+                else:
+                    transcricao = None
+
+            except Exception as e:
+                results.append({
+                    "filename": filename,
+                    "transcription": "" 
+                })
+
+            results.append({
+                "filename": filename,
+                "transcription": transcricao 
+            })
+
+    return jsonify({"results": results}), 200
+
+
+
+
 
     buffer.seek(0)
 

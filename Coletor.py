@@ -13,6 +13,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTe
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter
+from io import BytesIO
 #from langchain_community.embeddings import HuggingFaceEmbeddings
 
 #embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -28,6 +29,15 @@ def pdf2md_extractor(file_path:str):
     if not text.strip():
         return ["Sem texto reconhecido no documento"]
     return text
+
+def pdf2md_extractormod(file_bytes: BytesIO):
+    file_bytes.seek(0)
+    result = conversor_pdf.convert(file_bytes)
+    text = result.document.export_to_markdown() or ""
+    if not text.strip():
+        return ["Sem texto reconhecido no documento"]
+    return text
+    
 
 def mp2txt_extractor(file_path:str):
         
