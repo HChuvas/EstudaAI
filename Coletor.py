@@ -36,17 +36,22 @@ def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     file_bytes.seek(0)
     ext = filename.split(".")[-1]
 
-    print(ext)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}")
 
-    with tempfile.NamedTemporaryFile(delete=True, suffix=f".{ext}") as tmp:
-        tmp.write(file_bytes.read())
-        tmp.flush()
-        print(tmp.name)
-        result = conversor_pdf.convert(tmp.name)
+    tmp.write(file_bytes.read())
+    tmp.flush()
+    tmp_path = tmp.name
+    tmp.close()
 
-    text = result.document.export_to_markdown() or ""
+    try:
+        result = conversor_pdf.convert(tmp_path)
+        text = result.document.export_to_markdown() or ""
+    finally:
+        os.remove(tmp_path) 
+
     if not text.strip():
         return ["Sem texto reconhecido no documento"]
+
     return text
     
 
