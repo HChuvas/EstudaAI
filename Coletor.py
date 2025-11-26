@@ -30,9 +30,9 @@ def pdf2md_extractor(file_path:str):
         return ["Sem texto reconhecido no documento"]
     return text
 
-def pdf2md_extractormod(file_bytes: BytesIO):
+def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     file_bytes.seek(0)
-    result = conversor_pdf.convert(file_bytes)
+    result = conversor_pdf.convert(file_bytes, filename=filename)
     text = result.document.export_to_markdown() or ""
     if not text.strip():
         return ["Sem texto reconhecido no documento"]

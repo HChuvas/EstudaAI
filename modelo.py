@@ -369,6 +369,7 @@ def download():
 
             conteudo = resp.content
             mem_file = BytesIO(conteudo)
+            mem_file.seek(0)
             filename = path.split("/")[-1]
             #zipf.writestr(filename,resp.content)
             ext = filename.split(".")[-1].lower() if "." in filename else ""
@@ -381,7 +382,7 @@ def download():
                     #transcricao = mp2txt_extractor(mem_file)
                     continue
                 elif ext in DOC_EXTS:
-                    transcricao = pdf2md_extractormod(mem_file)
+                    transcricao = pdf2md_extractormod(mem_file ,filename)
                 else:
                     transcricao = None
 
@@ -403,13 +404,7 @@ def download():
 
 
 
-    buffer.seek(0)
-
-    return send_file(
-        buffer,
-        as_attachment=True,
-        download_name="arquivos.zip"
-    )
+    
 
     
 # a ser feito: 
