@@ -358,7 +358,7 @@ def download():
     with ZipFile(buffer, "w") as zipf:
         for obj in data:
             path = obj.get("file_path")
-
+            material_id = obj.get("id")
             if not path:
                 return jsonify({"error": "File path unknown"}), 400
             
@@ -394,6 +394,7 @@ def download():
                 continue
 
             results.append({
+                "material_id": material_id,
                 "filename": filename,
                 "transcription": transcricao 
             })
