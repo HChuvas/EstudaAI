@@ -175,8 +175,8 @@ export const sendTranscriptsForStudyPlan = async (req: Request, res: Response, n
         const topicIds = req.body.topicIds
         console.log(topicIds)
         const transcripts = await studentService.getTranscripts(topicIds)
-        // axios.post("http://127.0.0.1:5000/materials", transcripts)
-        res.status(201).json(transcripts)
+        const studyplan = await axios.post("http://127.0.0.1:5000/studyplan", transcripts)
+        res.status(201).json(studyplan)
     } catch (error) {
         next(error)
     }
