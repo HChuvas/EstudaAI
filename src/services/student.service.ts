@@ -191,6 +191,12 @@ class StudentService {
         })
     }
 
+    async getStudyPlans(subjectId: number) {
+        return prisma.studyPlan.findMany({
+            where: { subject: { id: subjectId } }
+        })
+    }
+
     async processStudyPlanJSON(planData: StudyPlanResponse, userId: number, subjectId: number) {
         const topics = planData.topics
         const expanded = planData.expandedTopics

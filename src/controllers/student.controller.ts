@@ -182,6 +182,21 @@ export const sendTranscriptsForStudyPlan = async (req: Request, res: Response, n
     }
 }
 
+export const getStudyPlans = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const subjectId = Number(req.query.subjectId)
+        const studyPlans = await studentService.getStudyPlans(subjectId)
+        res.status(200).json(studyPlans)
+    } catch (error) {
+        next(error)
+    }
+}
+// get study plan (id)
+// delete material
+// delete topic
+// edit lembrete
+// delete lembrete
+
 export const createStudyPlan = async (req: Request, res: Response, next: NextFunction) => {
     const {
         subjectId,
