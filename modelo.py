@@ -418,13 +418,13 @@ def transcript_test():
         try:
             transcricao = pdf2md_extractor(path)
             results.append({
-                "id": material_id,
+                "material_id": material_id,
                 "filename": filename,
                 "transcription": transcricao
             })
         except Exception as e:
             results.append({
-                "id": material_id,
+                "material_id": material_id,
                 "filename": filename,
                 "transcription": "" 
             })
