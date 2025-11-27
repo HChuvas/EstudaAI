@@ -408,7 +408,7 @@ def transcript_test():
     results = []
 
     for obj in data:
-        path = obj.get("file_path")
+        path = obj.get("public_url")
         material_id = obj.get("id")
         filename = path.split("/")[-1]
 
