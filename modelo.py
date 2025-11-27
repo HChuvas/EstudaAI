@@ -40,8 +40,8 @@ def geracao_resumo(user_prompt):
 
                         {{
                             "resumo": {{
-                                "título": "titulo do resumo",
-                                "conteúdo": "todo o conteúdo do resumo"
+                                "titulo": "titulo do resumo",
+                                "conteudo": "todo o conteúdo do resumo"
                             }},
                             "lembretes": {{
                                 "lembrete1": {{
@@ -183,7 +183,7 @@ def geracao_resumo_json_mode(user_prompt):
         "input": user_prompt
     })
 
-    return output.model_dump_json(indent=2)
+    return output.model_dump()
 
 def conversar_com_llm(conteudo:str):
     prompt = ChatPromptTemplate.from_template(conteudo)
@@ -306,17 +306,24 @@ def gerar_plano_de_estudo(user_prompt):
     return output.model_dump()
 
 #Lembrete precisamos PROCESSAR OS DADOS EM  (pdf2md_extractor ou mp2text_extractor) para evitar erros na leitura
-@app.route("/generate", methods=["GET"])
+@app.route("/generate", methods=["POST"])
 def generate_summary():
     
     try:
         data = request.get_json()
-        user_prompt = data.get("material")
+        print(data)
+        user_prompt = ""
 
-        if not user_prompt:
+        for transcript in data:
+            user_prompt += transcript.get("content")
+
+        print(user_prompt)
+
+        if user_prompt == "":
             return jsonify({"error": "Campo 'material' é obrigatório"}), 400
 
         result = geracao_resumo_json_mode(user_prompt)
+        print(result)
 
         try:
             json_result = result
@@ -335,13 +342,14 @@ def generate_study_plan():
     
     try:
         data = request.get_json()
+        print(data)
 
         user_prompt = ""
 
         for topic_transcriptions in data:
             for transcript in topic_transcriptions:
                 user_prompt += transcript.get("content")
-        print(user_prompt)
+        #print(user_prompt)
 
         if user_prompt == "":
             return jsonify({"error": "Input vazio"}), 400
@@ -376,7 +384,7 @@ def chat():
         print(e)
         return jsonify({"error": e}), 500
 
-@app.route("/download", methods=["POST"])
+"""@app.route("/download", methods=["POST"])
 def download():
     
     data = request.json
@@ -427,7 +435,7 @@ def download():
                 "transcription": transcricao 
             })
 
-    return jsonify({"results": results}), 200
+    return jsonify({"results": results}), 200"""
 
 @app.route("/transcript", methods=["POST"])
 def transcript_test():
