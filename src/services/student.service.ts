@@ -172,6 +172,13 @@ class StudentService {
 
     async saveTranscripts(transcripts: Array<TranscriptResponse>, topicId: number) {
         return Promise.all(transcripts.map(async (transcript) => {
+            // checks if the transcript already exists
+            const exists = await prisma.transcript.findFirst({
+                where: { title: transcript.filename }
+            })
+
+            if (exists) return { transcript: `Transcript of ${exists.title} and id ${exists.id} already exists`}
+
             return prisma.transcript.create({
                 data: {
                     content: transcript.transcription,

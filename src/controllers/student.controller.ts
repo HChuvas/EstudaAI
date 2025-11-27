@@ -37,9 +37,9 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
 export const getReminders = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        console.log(req.auth?.id)
+        // console.log(req.auth?.id)
         const userId = Number(req.auth?.id)
-        console.log(userId)
+        // console.log(userId)
         const reminders = await studentService.getRemindersService(userId)
         res.status(200).json(reminders)
     } catch (error) {
@@ -109,8 +109,8 @@ export const getAISummaryAndReminders = async (req: Request, res: Response, next
         const userId = Number(req.auth?.id)
         const topicId = Number(req.body.topicId)
         const transcripts = await studentService.getTranscripts([topicId])
-        console.log(transcripts[0])
-        const aiResponse = await axios.post("http://127.0.0.1:5000/generate", transcripts)
+        // console.log(transcripts[0])
+        const aiResponse = await axios.post("http://127.0.0.1:5000/generate", transcripts[0])
         // res.status(200).json(aiResponse)
 
         const result = await studentService.processSummaryRemindersJSON(userId, topicId, aiResponse.data)
@@ -164,7 +164,7 @@ export const sendMaterialsToLLMAndSaveTranscripts = async (req: Request, res: Re
         const topicId = Number(req.body.topicId)
         const materialUrls = await studentService.getTopicMaterials(topicId)
         const transcripts = await axios.post("http://127.0.0.1:5000/transcript", materialUrls)
-        console.log(transcripts.data.results)
+        // console.log(transcripts.data.results)
         const createdTranscripts = await studentService.saveTranscripts(transcripts.data.results, topicId)
         res.status(200).json({materialUrls, transcripts: createdTranscripts})
     } catch (error) {
@@ -248,7 +248,7 @@ export const deleteStudyPlan = async (req: Request, res: Response, next: NextFun
 export const getSubjectTopics = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const subjectId = Number(req.query.subjectId)
-        console.log(subjectId)
+        // console.log(subjectId)
         const topics = await studentService.getSubjectTopics(subjectId)
         res.status(200).json(topics)
     } catch (error) {
