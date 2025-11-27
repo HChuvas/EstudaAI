@@ -11,6 +11,10 @@ class Lembrete(BaseModel):
     descricao: str
     data: str = ""
 
+class SaidaResumo(BaseModel):
+    resumo: Resumo
+    lembretes: Dict[str, Lembrete] = {}
+
 class StudyPlanTitle(BaseModel):
     title: str
 
