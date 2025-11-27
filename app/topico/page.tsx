@@ -1,6 +1,6 @@
 'use client';
 import Image from "next/image";
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Navbar } from "../components/navbar";
 
 type ConteudoData = {
@@ -15,8 +15,51 @@ type TopicoData = {
   conteudos: ConteudoData[];
 }
 
+type MaterialDocumento = {
+id : number;
+nome : string;
+}
+
+type Mensagem = {
+  id : number;
+  conteudo : string;
+  tempo : string;
+  ia : boolean
+}
+
+type Chat = {
+  id : number;
+  mensagens : Mensagem[];
+}
+
 export default function Page() {
-  const [topicoData, setTopicoData] = useState<TopicoData>({
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mensagem, setMensagem] = useState('');
+  const [chat, setChat] = useState<Chat>({
+
+    id: 0,
+    mensagens : [
+      {
+       id : 0,
+       conteudo : 'teste teste teste teste',
+       tempo : 'teste',
+       ia : false 
+      },
+      {
+       id : 1,
+       conteudo : 'teste teste teste teste',
+       tempo : 'teste',
+       ia : true 
+      }
+
+    ]
+
+  });
+  const [topicoData, setTopicoData] = useState<TopicoData>(
+  
+      {
     id: 1,
     titulo: 'Ponteiros em C',
     conteudos: [
@@ -31,9 +74,26 @@ export default function Page() {
         conteudo: `Os Ponteiros representam a elite suprema das operações em C, uma casta especial de variáveis que transcendem a mera armazenagem de valores convencionais para operar em um plano superior: o das coordenadas de memória. Estes não são meros portadores de dados, mas sim navegadores cósmicos que, em vez de carregarem planetas (valores) em sua essência, detêm os mapas estelares mais precisos com as localizações exatas (endereços) onde esses corpos celestes orbitam na vastidão do espaço de memória. Eles são os cartógrafos do universo digital, os únicos capazes de mapear e percorrer diretamente as constelações de bytes que compõem a realidade computacional.`
       }
     ]
-  })
+  }
 
-  const [mensagem, setMensagem] = useState('');
+);
+    
+    /*{
+    id: 1,
+    titulo: 'Ponteiros em C',
+    conteudos: [
+      {
+        id: 1,
+        titulo: 'Transcrição do Arquivo Original',
+        conteudo: 'A utilização de ponteiros em linguagem C é uma das características que tornam a linguagem tão flexível e poderosa. Ponteiros ou apontadores, são variáveis que armazenam o endereço de memória de outras variáveis. Dizemos que um ponteiro "aponta" para uma varíável quando contém o endereço da mesma. Os ponteiros podem apontar para qualquer tipo de variável. Portanto temos ponteiros para int, float, double, etc.'
+      },
+      {
+        id: 2,
+        titulo: 'Resumo gerado por IA', 
+        conteudo: `Os Ponteiros representam a elite suprema das operações em C, uma casta especial de variáveis que transcendem a mera armazenagem de valores convencionais para operar em um plano superior: o das coordenadas de memória. Estes não são meros portadores de dados, mas sim navegadores cósmicos que, em vez de carregarem planetas (valores) em sua essência, detêm os mapas estelares mais precisos com as localizações exatas (endereços) onde esses corpos celestes orbitam na vastidão do espaço de memória. Eles são os cartógrafos do universo digital, os únicos capazes de mapear e percorrer diretamente as constelações de bytes que compõem a realidade computacional.`
+      }
+    ]
+  })*/
 
   const handleMaisOpcoes = useCallback(() => {
     console.log('Botão: Mais Opções');
@@ -67,6 +127,10 @@ export default function Page() {
     console.log('Botão: Plano de Estudos');
   }, []);
 
+  const handleArquivoMaterialOriginal = useCallback(() => {
+      console.log('Ascessar material Original');
+  }, [])
+
   const handleEnviarMensagem = useCallback(() => {
     console.log('Botão: Enviar Mensagem', mensagem);
     setMensagem('');
@@ -82,19 +146,56 @@ export default function Page() {
     }
   }, [mensagem, handleEnviarMensagem]);
 
+  useEffect( () => {
+    const fetchTopicoData = async() => {
+      try {
+
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch('/topico');
+
+        if (!response.ok) throw new Error("Failed to fetch Users");
+        const data = await response.json();
+        
+        setTopicoData(data);
+
+      } catch (err) {
+        
+        if (err instanceof Error){
+          setError(err.message);
+        } else {
+          setError("An unknown error ocurred");
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTopicoData();
+  }, [])
+
+  
+
   return(
     <main>
       <Navbar></Navbar>
-      <div className="flex min-h-[calc(100vh-4rem)] gap-4 bg-white w-full p-4 box-border overflow-hidden">
-        <section className="flex flex-col flex-1 gap-4 border-2 border-[#098842] bg-white rounded-xl p-4 overflow-y-auto max-h-[calc(100vh-6rem)] w-7/10 drop-shadow-md 
-          [&::-webkit-scrollbar]:w-1.5
-          [&::-webkit-scrollbar-track]:bg-gray-100
-          [&::-webkit-scrollbar-track]:rounded
-          [&::-webkit-scrollbar-thumb]:bg-[#098842]
-          [&::-webkit-scrollbar-thumb]:rounded ">
+      <div className="flex min-h-[calc(100vh-4rem)] gap-4 bg-white w-full p-4 box-border">
+        <section className="overflow-y-auto flex flex-col flex-1 gap-4 border-2 border-[#098842] bg-white rounded-xl p-4 max-h-[calc(100vh-6rem)] w-7/10 drop-shadow-md ">
 
           <h1 className=" font-montserrat font-bold text-[#686464] text-center m-0 pt-2 text-2xl">
-            {topicoData.titulo}
+            
+            { loading? 
+            
+            <p>CARREGANDO CONTEUDO</p>
+
+            : error? 
+            
+            <p>UM ERROR OCORREU</p>
+
+            :
+
+
+            topicoData.titulo}
           </h1> 
 
           <div className="flex flex-col  pl-2 pr-3 pt-2 pb-3 border-[1.5px] border-[#098842] rounded-2xl bg-[#F5F5F5]">
@@ -126,7 +227,11 @@ export default function Page() {
             </div>
           </div>
 
-          {topicoData.conteudos.map(conteudo => (
+        { loading? 
+          
+          <div></div>
+          
+          : topicoData.conteudos.map(conteudo => (
             <div key={conteudo.id} className="flex-1  pr-3 pl-2 pt-2 pb-3 border-[1.5px] border-[#098842] rounded-2xl bg-[#F5F5F5] text-black">
               <span className="flex justify-between items-center mb-2 px-0.5 py-0.5">
                 <h2 className="font-montserrat font-bold text-[#494949] text-left mb-2 text-lg">
@@ -163,7 +268,6 @@ export default function Page() {
               </span>
             </div>
           ))}
-
           <button 
             className="h-6 w-56 rounded-lg mb-4 ml-4 flex flex-row justify-center items-center bg-[#098842] font-montserrat font-normal text-white text-xl cursor-pointer border-none box-border"
             aria-label="Abrir plano de estudos"
@@ -176,19 +280,19 @@ export default function Page() {
 
         <section className="flex flex-col w-3/10 min-w-72 gap-3">
           <div className="flex-1 border-2 border-[#098842] bg-white rounded-xl min-h-86 p-4 overflow-y-auto flex flex-col gap-4 box-border drop-shadow-md
-            [&::-webkit-scrollbar]:w-1.5
-            [&::-webkit-scrollbar-track]:bg-gray-100
-            [&::-webkit-scrollbar-track]:rounded
-            [&::-webkit-scrollbar-thumb]:bg-[#098842]
-            [&::-webkit-scrollbar-thumb]:rounded">
-            <div className="self-end max-w-80 p-3 bg-[#098842] rounded-2xl text-white font-montserrat text-sm leading-6 relative box-border">
-              O que são ponteiros em C?
-              <div className="text-[0.7rem] opacity-80 mt-1 text-right">10:30</div>
+            [&::-webkit-scrollbar]:hidden
+            [-ms-overflow-style:none]
+            [scrollbar-width:none]">
+
+            {chat.mensagens.map(mensagem => ( 
+              
+              <div key = {mensagem.id} className={ mensagem.ia? "self-start max-w-80 p-3 bg-white border-2 border-[#098842] rounded-2xl text-[#333333] font-montserrat text-sm leading-6 relative box-border" : "self-end max-w-80 p-3 bg-[#098842] rounded-2xl text-white font-montserrat text-sm leading-6 relative box-border" }>
+              {mensagem.conteudo}
+              <div className="text-[0.7rem] opacity-80 mt-1 text-right">{mensagem.tempo}</div>
             </div>
-            <div className="self-start max-w-80 p-3 bg-white border-2 border-[#098842] rounded-2xl text-[#333333] font-montserrat text-sm leading-6 relative box-border">
-              Ponteiros em C são variáveis que armazenam endereços de memória de outras variáveis. Eles permitem acesso direto à memória e são fundamentais para manipulação eficiente de dados.
-              <div className="text-[0.7rem] opacity-60 mt-1 text-left">10:31</div>
-            </div>
+
+            ))}
+
           </div>
 
           <div className="flex items-center h-12 border-2 border-[#098842] bg-white rounded-xl px-4 gap-2 box-border drop-shadow-md">
