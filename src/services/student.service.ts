@@ -82,8 +82,8 @@ class StudentService {
     async createSummaryService(topicId: number, summary: Resumo) {
         const newSummary = await prisma.summary.create({
             data: {
-                title: summary.título,
-                content: summary.conteúdo,
+                title: summary.titulo,
+                content: summary.conteudo,
                 topic: {
                     connect: { id: topicId }
                 }

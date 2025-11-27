@@ -6,8 +6,8 @@ declare global {
   }
 
   interface Resumo {
-    título: string;
-    conteúdo: string;
+    titulo: string;
+    conteudo: string;
   }
 
   interface ResumosLembretesIA {
