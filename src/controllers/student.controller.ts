@@ -191,7 +191,26 @@ export const getStudyPlans = async (req: Request, res: Response, next: NextFunct
         next(error)
     }
 }
-// get study plan (id)
+
+export const getStudyPlan = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const studyPlanId = Number(req.query.id)
+        const studyPlan = await studentService.getStudyPlan(studyPlanId)
+        res.status(200).json(studyPlan)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const deleteMaterial = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const materialId = Number(req.query.id)
+        const material = await studentService.deleteMaterial(materialId)
+        res.status(200).json(material)
+    } catch (error) {
+        next(error)
+    }
+}
 // delete material
 // delete topic
 // edit lembrete

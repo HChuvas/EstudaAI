@@ -89,7 +89,8 @@ model Material {
   id        Int    @id @default(autoincrement())
   title     String
   file_type String
-  file_path String
+  public_url String
+  bucket_path String
   userId    Int
   topic_id  Int
 

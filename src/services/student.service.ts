@@ -117,7 +117,8 @@ class StudentService {
                 data: {
                     title: file.originalname,
                     file_type: file.mimetype,
-                    file_path: publicUrlData.publicUrl,
+                    public_url: publicUrlData.publicUrl,
+                    bucket_path: path,
                     topic: {
                         connect: { id: topicId },
                         
@@ -137,10 +138,24 @@ class StudentService {
        return Promise.all(uploads)
     }
 
+    async deleteMaterial(materialId: number) {
+        const material = await prisma.material.delete({
+            where: { id: materialId }
+        })
+
+        const { error } = await supabase.storage
+        .from("EstudaAI-Files")
+        .remove([material.bucket_path])
+
+        if (error) throw new Error("Could not remove file: " + error.message)
+
+        return material
+    }
+
     async getTopicMaterials(topicId: number) {
         const materialUrls = await prisma.material.findMany({
             where: { topic_id: topicId },
-            select: { id: true, file_path: true }
+            select: { id: true, public_url: true }
         })
 
         return materialUrls
@@ -194,6 +209,12 @@ class StudentService {
     async getStudyPlans(subjectId: number) {
         return prisma.studyPlan.findMany({
             where: { subject: { id: subjectId } }
+        })
+    }
+
+    async getStudyPlan(planId: number) {
+        return prisma.studyPlan.findUnique({
+            where: { id: planId }
         })
     }
 
