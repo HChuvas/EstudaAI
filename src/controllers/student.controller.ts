@@ -108,7 +108,9 @@ export const getAISummaryAndReminders = async (req: Request, res: Response, next
     try {
         const userId = Number(req.auth?.id)
         const topicId = Number(req.body.topicId)
-        const aiResponse = await axios.get("http://127.0.0.1:5000/generate")
+        const transcripts = await studentService.getTranscripts([topicId])
+        console.log(transcripts[0])
+        const aiResponse = await axios.post("http://127.0.0.1:5000/generate", transcripts)
         // res.status(200).json(aiResponse)
 
         const result = await studentService.processSummaryRemindersJSON(userId, topicId, aiResponse.data)
