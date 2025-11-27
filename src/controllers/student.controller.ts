@@ -173,10 +173,9 @@ export const sendMaterialsToLLMAndSaveTranscripts = async (req: Request, res: Re
 export const sendTranscriptsForStudyPlan = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const topicIds = req.body.topicIds
-        console.log(topicIds)
         const transcripts = await studentService.getTranscripts(topicIds)
         const studyplan = await axios.post("http://127.0.0.1:5000/studyplan", transcripts)
-        res.status(201).json(studyplan)
+        res.status(201).json(studyplan.data)
     } catch (error) {
         next(error)
     }
@@ -211,7 +210,16 @@ export const deleteMaterial = async (req: Request, res: Response, next: NextFunc
         next(error)
     }
 }
-// delete material
+
+export const deleteTopic = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topicId = Number(req.query.id)
+        const deletedTopic = await studentService.deleteTopic(topicId)
+        res.status(200).json(deletedTopic)
+    } catch (error) {
+        next(error)
+    }
+}
 // delete topic
 // edit lembrete
 // delete lembrete

@@ -206,6 +206,12 @@ class StudentService {
         })
     }
 
+    async deleteTopic(topicId: number){
+        return await prisma.topic.delete({
+            where: { id: topicId }
+        })
+    }
+
     async getStudyPlans(subjectId: number) {
         return prisma.studyPlan.findMany({
             where: { subject: { id: subjectId } }
@@ -214,7 +220,13 @@ class StudentService {
 
     async getStudyPlan(planId: number) {
         return prisma.studyPlan.findUnique({
-            where: { id: planId }
+            where: { id: planId },
+            include: {
+                study_plan_topics: true,
+                study_plans_checklist: true,
+                study_plans_complementary: true,
+                study_plans_expanded: true
+            }
         })
     }
 
@@ -303,6 +315,7 @@ class StudentService {
         return await prisma.studyPlanChecklistItem.create({
             data: {
                 title: checklist.title,
+                order_index: checklist.orderIndex,
                 description: checklist.description,
                 study_plan: { connect: { id: planId } }
             }

@@ -137,8 +137,8 @@ model StudyPlanTopics {
 model StudyPlanExpanded {
   id Int @id @default(autoincrement())
   plan_id Int
-  topic_title String @db.VarChar(50)
-  justification String @db.VarChar(100)
+  topic_title String 
+  justification String 
   order_index Int
 
   study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
@@ -147,8 +147,8 @@ model StudyPlanExpanded {
 model StudyPlanComplementary {
   id Int @id @default(autoincrement())
   plan_id Int
-  topic_title String @db.VarChar(50)
-  description String @db.VarChar(100)
+  topic_title String 
+  description String 
   order_index Int
 
   study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
@@ -157,8 +157,9 @@ model StudyPlanComplementary {
 model StudyPlanChecklistItem {
   id Int @id @default(autoincrement())
   plan_id Int
-  title String @db.VarChar(50)
-  description String @db.VarChar(50)
+  order_index Int
+  title String 
+  description String
   completed Boolean @default(false)
 
   study_plan StudyPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)

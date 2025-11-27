@@ -38,6 +38,7 @@ declare global {
 
   interface StudyPlanChecklistItem {
     title: string,
+    orderIndex: number,
     description: string
   }
 
