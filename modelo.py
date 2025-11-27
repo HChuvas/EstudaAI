@@ -215,60 +215,82 @@ def gerar_plano_de_estudo(user_prompt):
                                         b) Estruturas de dados básicas (vetores e construtores);
                                         c) ...
                                         OBS: Os assuntos devem ser relevantes para o conteúdo e não puxar de conhecimentos que estão muito além do escopo estudado.
-                                    
+                                    REGRAS OBRIGATÓRIAS DE FORMATAÇÃO (SIGA SEMPRE):
+
+                                    1. NUNCA ultrapasse os limites de caracteres abaixo:
+                                    - "title" e "topicTitle": até 50 caracteres (com espaços)
+                                    - "description" (exceto checklist) até 100 caracteres
+                                    - "justification": até 100 caracteres
+                                    - checklist "description": até 50 caracteres
+
+                                    2. SE PASSAR DO LIMITE, REESCREVA até ficar dentro do limite.
+
+                                    3. NÃO use frases longas. Prefira textos diretos e curtos.
+
+                                    4. NÃO adicione explicações fora do JSON.
+
+                                    5. Sempre verifique o tamanho de cada campo antes de retornar.
+
+                                    6. Respeite rigorosamente os caracteres. ESTE É O REQUISITO MAIS IMPORTANTE.
+
+
                                     Gere o plano de estudos seguindo o formato JSON especificado:
 
-                                        {
-                                            "plano": {
-                                                "titulo": "Titulo do plano de estudos"
-                                            },
-                                            "conteudos_prioritarios": {
-                                                "topico1": {
-                                                    "ordem": 1,
-                                                    "titulo": "Nome do primeiro tópico prioritário"
-                                                },
-                                                "topico2": {
-                                                    "ordem": 2,
-                                                    "titulo": "Nome do segundo tópico prioritário"
-                                                }
+                                        {{
+                                            "title": {{
+                                                "title": "Titulo do plano de estudos"
+                                            }},
+                                            "topics": {{
+                                                "topic1": {{
+                                                    "title": "Nome do primeiro tópico prioritário",
+                                                    "orderIndex": 1
+                                                }},
+                                                "topic2": {{
+                                                    "title": "Nome do segundo tópico prioritário",
+                                                    "orderIndex": 2
+                                                }}
                                                 ...
-                                            },
-                                            "topicos_expandidos": {
-                                                "topico1": {
-                                                    "ordem": 1,
-                                                    "titulo": "Nome do primeiro tópico",
-                                                    "justificativa": "Explicação do porquê esse tópico vem nessa ordem"
-                                                },
-                                                "topico2": {
-                                                    "ordem": 2,
-                                                    "titulo": "Nome do segundo tópico",
-                                                    "justificativa": "Explicação do porquê esse tópico vem nessa ordem"
-                                                }
+                                            }},
+                                            "expandedTopics": {{
+                                                "topic1": {{
+                                                    "topicTitle": "Nome do primeiro tópico",
+                                                    "orderIndex": 1,
+                                                    "justification": "Explicação do porquê esse tópico vem nessa ordem"
+                                                }},
+                                                "topic2": {{
+                                                    "topicTitle": "Nome do segundo tópico",
+                                                    "orderIndex": 2,
+                                                    "justification": "Explicação do porquê esse tópico vem nessa ordem"
+                                                }}
                                                 ...
-                                            },
-                                            "conteudos_complementares": {
-                                                "complemento1": {
-                                                    "titulo": "Conteúdo complementar relevante",
-                                                    "descricao": "Descrição resumida da importância desse conteúdo adicional"
-                                                },
-                                                "complemento2": {
-                                                    "titulo": "Outro conteúdo complementar",
-                                                    "descricao": "Descrição resumida"
-                                                }
+                                            }},
+                                            "complementaryTopics": {{
+                                                "complemento1": {{
+                                                    "title": "Conteúdo complementar relevante",
+                                                    "description": "Descrição resumida da importância desse conteúdo adicional",
+                                                    "orderIndex": 1
+                                                }},
+                                                "complemento2": {{
+                                                    "title": "Outro conteúdo complementar",
+                                                    "description": "Descrição resumida",
+                                                    "orderIndex": 2
+                                                }}
                                                 ...
-                                            },
-                                            "checklist": {
-                                                "topico1": {
-                                                    "titulo": "Nome do Topico",
-                                                    "Descricao": "Descricao do Topico"
-                                                },
-                                                "topico1": {
-                                                    "titulo": "Nome do Topico",
-                                                    "Descricao": "Descricao do Topico"
-                                                }
+                                            }},
+                                            "checklist": {{
+                                                "item1": {{
+                                                    "title": "Título do item da checklist",
+                                                    "orderIndex": 1,
+                                                    "description": "Descrição do que deve ser verificado / estudado"
+                                                }},
+                                                "item2": {{
+                                                    "title": "Outro item da checklist",
+                                                    "orderIndex": 2,
+                                                    "description": "Descrição resumida do item"
+                                                }}
                                                 ...
-                                            }
-                                        }
+                                            }}
+                                        }}
                                     """
     
     parser_plano_de_estudos = PydanticOutputParser(pydantic_object=SaidaPlanoDeEstudos)
@@ -281,7 +303,7 @@ def gerar_plano_de_estudo(user_prompt):
         "input": user_prompt
     })
 
-    return output.model_dump_json(indent=2)
+    return output.model_dump()
 
 #Lembrete precisamos PROCESSAR OS DADOS EM  (pdf2md_extractor ou mp2text_extractor) para evitar erros na leitura
 @app.route("/generate", methods=["GET"])
@@ -308,15 +330,21 @@ def generate_summary():
         print(e)
         return jsonify({"error": e}), 500
     
-@app.route("/studyplan", methods=["GET"])
+@app.route("/studyplan", methods=["POST"])
 def generate_study_plan():
     
     try:
         data = request.get_json()
-        user_prompt = data.get("transcription")
 
-        if not user_prompt:
-            return jsonify({"error": "Campo 'material' é obrigatório"}), 400
+        user_prompt = ""
+
+        for topic_transcriptions in data:
+            for transcript in topic_transcriptions:
+                user_prompt += transcript.get("content")
+        print(user_prompt)
+
+        if user_prompt == "":
+            return jsonify({"error": "Input vazio"}), 400
 
         result = gerar_plano_de_estudo(user_prompt)
 

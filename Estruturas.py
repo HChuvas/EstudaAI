@@ -11,34 +11,36 @@ class Lembrete(BaseModel):
     descricao: str
     data: str = ""
 
-class SaidaResumo(BaseModel):
-     resumo: Resumo
-     lembretes: Dict[str, Lembrete] = {}
+class StudyPlanTitle(BaseModel):
+    title: str
 
-class TopicoSimplificado(BaseModel):
-    ordem: int
-    titulo: str
 
-class TopicoExpandido(BaseModel):
-    ordem: int
-    titulo: str
-    justificativa: str
+class StudyPlanTopic(BaseModel):
+    title: str
+    orderIndex: int
 
-class ConteudoComplementar(BaseModel):
-    indice: int
-    titulo: str
-    descricao: str
 
-class Plano(BaseModel):
-    titulo: str
+class StudyPlanExpanded(BaseModel):
+    topicTitle: str
+    orderIndex: int
+    justification: str
 
-class ChecklistItem(BaseModel):
-     titulo: str
-     descrical: str
+
+class StudyPlanComplementary(BaseModel):
+    title: str
+    description: str
+    orderIndex: int
+
+
+class StudyPlanChecklistItem(BaseModel):
+    title: str
+    orderIndex: int
+    description: str
+
 
 class SaidaPlanoDeEstudos(BaseModel):
-    plano: Plano
-    conteudos_prioritarios: Dict[str, TopicoSimplificado]
-    topicos_expandidos: Dict[str, TopicoExpandido]
-    conteudos_complementares: Dict[str, ConteudoComplementar]
-    checklist: Dict[str, ChecklistItem]
+    title: StudyPlanTitle
+    topics: Dict[str, StudyPlanTopic]
+    expandedTopics: Dict[str, StudyPlanExpanded]
+    complementaryTopics: Dict[str, StudyPlanComplementary]
+    checklist: Dict[str, StudyPlanChecklistItem]
