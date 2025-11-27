@@ -65,18 +65,18 @@ class StudentService {
     async processSummaryRemindersJSON(userId: number, topicId: number, json: ResumosLembretesIA) {
         const summary = json.resumo
         const lembretes = json.lembretes
-        const output = []    
+        const reminders = []    
         if (lembretes) {
             for (const [key, lembrete] of Object.entries(lembretes)) {
                 const title = lembrete.titulo
                 const description = lembrete.descricao
                 const date = lembrete.data
                 const newReminder = await this.createReminderService(userId, lembrete)
-                output.push(newReminder)
+                reminders.push(newReminder)
             }
         }
         const newSummary = await this.createSummaryService(topicId, summary)
-        return { output, newSummary }
+        return { reminders, newSummary }
     }
 
     async createSummaryService(topicId: number, summary: Resumo) {
