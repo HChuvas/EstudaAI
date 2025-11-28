@@ -217,21 +217,51 @@ def gerar_plano_de_estudo(user_prompt):
                                         OBS: Os assuntos devem ser relevantes para o conteúdo e não puxar de conhecimentos que estão muito além do escopo estudado.
                                     REGRAS OBRIGATÓRIAS DE FORMATAÇÃO (SIGA SEMPRE):
 
-                                    1. NUNCA ultrapasse os limites de caracteres abaixo:
-                                    - "title" e "topicTitle": até 50 caracteres (com espaços)
-                                    - "description" (exceto checklist) até 100 caracteres
-                                    - "justification": até 100 caracteres
-                                    - checklist "description": até 50 caracteres
+                                    1. REGRAS PARA GERAÇÃO DOS SUMÁRIOS:
+                                    - "title" e "topicTitle": uma sentença curta que sumarize exatamente o que deve ser feito.
+                                    - "description" (exceto checklist) deve ser composto de até 2 sentenças curtas e explicando a importância daquele tópico para o aprendizado.
+                                    - "justification": de duas sentenças curtas, explicando o motivo da escolha daquele método para o tópico na primeira sentaça e abrindo um gancho 
+                                    sobre a relação dessa com o próximo tópico com a segunda sentença.
+                                    - checklist "description": composto de no máximo uma sentenças curtas, explicando o que o tópico da checklist espera.
 
-                                    2. SE PASSAR DO LIMITE, REESCREVA até ficar dentro do limite.
+                                    2. NÃO adicione explicações fora do JSON.
 
-                                    3. NÃO use frases longas. Prefira textos diretos e curtos.
+                                    3. REGRAS DOS TÓPICOS:
+                                    - Evite enaltecer a importância do tópico de maneira expositiva dentro da justificativa. Ex. do que NÃO deve ser feito: "Este tópico é 
+                                    fundamental para compreender o conceito de ponteiros e seus operadores básicos", "Este tópico demonstra a forte relação entre ponteiros 
+                                    e arrays em C", "Compreender como ponteiros são usados na passagem de parâmetros para funções é essencial", etc.
+                                    - A justificativa deve EXPLICITAR o 'porquê' de aquele tópico ser relevante, então opte por frases que denotem correlação. Ex: "Poteiros são essenciais para aprender
+                                    como a linguagem C gerencia memória.", "Entender a relação entre Ponteiros e Arrays solidifica a base para compreensão de Estruturas de Dados mais complexas.", etc.
 
-                                    4. NÃO adicione explicações fora do JSON.
+                                    3. REGRAS DA CHECKLIST:
+                                    - Cada tópico deve ser composto de atividades concretas que permitam o enriquecimento do aprendizado do aluno.
+                                    - EVITE pedir por atividades vagas ou sugestões educadas como "Estudar 'assunto X'", "Saber aplicar tais conhecimentos", isso são meios
+                                    para que o aluno atinja os objetivos da checklist, e, portanto, não devem ser considerados como objetivos em si.
+                                    - Novamente os checklists DEVEM ser relacionados com todo o conhecimento absorsvido dos materiais recebidos: 
+                                        a) Se hoverem livros sobre o assunto como recomendações, recomende a leitura dos capítulos relacionados.
+                                        b) Se for mencionado uma lista de exercícios, ou souber que dito material possui exercícios, priorize em recomendar os exercícios desse material
+                                    - Exemplos do que se espera na geração da checklist:
 
-                                    5. Sempre verifique o tamanho de cada campo antes de retornar.
+                                        "checklist": 
+                                            "item1": 
+                                                "title": "Leitura Obrigatória",
+                                                "orderIndex": 1,
+                                                "description": "Ler Capítulo 3 do livro 'Introdução a Algoritmos (Cormen)'"
 
-                                    6. Respeite rigorosamente os caracteres. ESTE É O REQUISITO MAIS IMPORTANTE.
+                                            "item2": 
+                                                "title": "Fichamento",
+                                                "orderIndex": 2,
+                                                "description": "Definir 'Análise de Algoritmos' e 'Complexidade'"
+
+                                            "item3": 
+                                                "title": "Videoaula Introdutória",
+                                                "orderIndex": 3,
+                                                "description": "Assistir à videoaula 'Complexidade de Algoritmos - Conceitos Iniciais'"
+
+                                            "item4": 
+                                                "title": "Praticar",
+                                                "orderIndex": 4,
+                                                "description": "Identificar a notação O de 5 loops simples"
 
 
                                     Gere o plano de estudos seguindo o formato JSON especificado:
