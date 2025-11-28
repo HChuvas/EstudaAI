@@ -321,6 +321,8 @@ def gerar_plano_de_estudo(user_prompt):
                                                 ...
                                             }}
                                         }}
+
+                                    Os assuntos do plano de estudos são os seguintes {input}
                                     """
     
     parser_plano_de_estudos = PydanticOutputParser(pydantic_object=SaidaPlanoDeEstudos)
