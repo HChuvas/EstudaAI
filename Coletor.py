@@ -8,20 +8,36 @@
 #                               2: e os materiais visuais dentro de um slide
 #
 # Precisamos de Chunking dos dados para: arquivos muito longos ou muitos arquivos
-import os, whisper, transformers
+import os, whisper, transformers, ffmpeg
 from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from docling.document_converter import DocumentConverter
-from pdfminer.high_level import extract_text
-from io import BytesIO
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import OcrOptions, RapidOcrOptions
+import cv2
 #from langchain_community.embeddings import HuggingFaceEmbeddings
 
 #embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
+
 os.environ["PATH"] += os.pathsep + os.path.abspath("./ffmpeg/bin")
 
-conversor_pdf = DocumentConverter()
+ocr_opts = OcrOptions(
+    do_ocr=True,
+    ocr_engine="rapidocr",
+    lang=["eng", "por"],
+)
+
+pdf_config = PdfFormatOption(
+    ocr_options=ocr_opts,
+    do_table_structure=True,
+    preserve_layout=False,
+)
+
+conversor_pdf = DocumentConverter(format_options={
+    InputFormat.PDF: pdf_config
+})
 model = whisper.load_model("large")
 
 def pdf2md_extractor(file_path:str):
@@ -53,16 +69,17 @@ def pdf2md_extractor(file_path:str):
 
     return text"""
 
-def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
+"""def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
     file_bytes.seek(0)
     text = extract_text(file_bytes)
-    return text    
+    return text    """
 
 def mp2txt_extractor(file_path:str):
         
     if has_audio(file_path):
         result = model.transcribe(audio = file_path, language = "pt")
         return result["text"]
+    return None
 
 def has_audio(file_path:str):
 
@@ -89,3 +106,6 @@ def chunk_data(text_data:str):
     )
     chunks = splitter.split_text(text_data)
     return [chunk.strip() for chunk in chunks if chunk.strip()]
+
+
+print(pdf2md_extractor("ai-service\\English_File_4th_edition_Elementary_Workbook_www.frenglish.ru.pdf"))
