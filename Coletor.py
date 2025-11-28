@@ -106,6 +106,3 @@ def chunk_data(text_data:str):
     )
     chunks = splitter.split_text(text_data)
     return [chunk.strip() for chunk in chunks if chunk.strip()]
-
-
-print(pdf2md_extractor("ai-service\\English_File_4th_edition_Elementary_Workbook_www.frenglish.ru.pdf"))
