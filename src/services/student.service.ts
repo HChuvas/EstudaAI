@@ -265,6 +265,26 @@ class StudentService {
         })
     }
 
+    async editChecklistItem(itemId: number, data: { title: string, description: string }) {
+        return prisma.studyPlanChecklistItem.update({
+            where: { id: itemId },
+            data
+        })
+    }
+
+    async markChecklistItem(itemId: number) {
+        const item = await prisma.studyPlanChecklistItem.findUnique({
+            where: { id: itemId }
+        })
+
+        return prisma.studyPlanChecklistItem.update({
+            where: { id: itemId },
+            data: {
+            completed: !item?.completed
+            }
+        })
+    }
+
     async processStudyPlanJSON(planData: StudyPlanResponse, userId: number, subjectId: number) {
         const topics = planData.topics
         const expanded = planData.expandedTopics

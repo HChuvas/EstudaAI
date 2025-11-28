@@ -269,6 +269,22 @@ export const deleteStudyPlan = async (req: Request, res: Response, next: NextFun
     res.status(200).json(deletedPlan)
 }
 
+export const editChecklistItem = async (req: Request, res: Response, next: NextFunction) => {
+    const checklistItemId = Number(req.body.itemId)
+    const data = {
+        title: req.body.title,
+        description: req.body.description
+    }
+    const editedItem = await studentService.editChecklistItem(checklistItemId, data)
+    res.status(200).json(editedItem)
+}
+
+export const markChecklistItem = async (req: Request, res: Response, next: NextFunction) => {
+    const itemId = Number(req.query.itemId)
+    const item = await studentService.markChecklistItem(itemId)
+    res.status(200).json(item)
+}
+
 export const getSubjectTopics = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const subjectId = Number(req.query.subjectId)

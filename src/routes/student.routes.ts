@@ -1,6 +1,6 @@
 import express from "express"
 
-import { createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
+import { createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editChecklistItem, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, markChecklistItem, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
 import { authMiddleware } from "../middlewares/authmiddleware.js";
 import { upload } from "../config/multer.js";
 
@@ -25,5 +25,13 @@ studentRouter.post("/topics/create", authMiddleware, createTopic)
 studentRouter.delete("/topics/delete", authMiddleware, deleteTopic)
 studentRouter.get("/studyplans", authMiddleware, getStudyPlans)
 studentRouter.get("/studyplan", authMiddleware, getStudyPlan)
+studentRouter.put("/studyplan/checklist/edit", authMiddleware, editChecklistItem)
+studentRouter.put("/studyplan/checklist/mark", authMiddleware, markChecklistItem)
+// add checklist item
+// topic transcripts
+// topic materials
+// topic summary
+// chat
+// load messages
 
 export default studentRouter
