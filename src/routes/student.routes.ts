@@ -1,6 +1,6 @@
 import express from "express"
 
-import { createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteStudyPlan, deleteTopic, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
+import { createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
 import { authMiddleware } from "../middlewares/authmiddleware.js";
 import { upload } from "../config/multer.js";
 
@@ -9,8 +9,8 @@ const studentRouter = express.Router();
 studentRouter.post("/register", registerStudent);
 studentRouter.get("/reminders", authMiddleware, getReminders)
 studentRouter.post("/reminders/create", authMiddleware, createReminder)
-// reminders/delete
-// reminder/edit
+studentRouter.delete("/reminders/delete", authMiddleware, deleteReminder)
+studentRouter.put("/reminders/edit", authMiddleware, editReminder)
 studentRouter.post("/subjects/create", authMiddleware, createSubject)
 studentRouter.get("/subjects", authMiddleware, getSubjects)
 studentRouter.post("/llm/generate", authMiddleware, getAISummaryAndReminders)

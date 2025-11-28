@@ -40,6 +40,23 @@ class StudentService {
         return reminder
     }
 
+    async editReminder(reminderId: number, data: Lembrete) {
+        return await prisma.reminder.update({
+            where: { id: reminderId },
+            data: {
+                title: data.titulo,
+                description: data.descricao,
+                due_date: data.data ?? null
+            }
+        })
+    }
+
+    async deleteReminder(reminderId: number) {
+        return await prisma.reminder.delete({
+            where: { id: reminderId }
+        })
+    }
+
     async createSubjectService(userId: number, name: string) {
         const subject = await prisma.subject.create({
             data: {
@@ -106,6 +123,12 @@ class StudentService {
             })
 
             if (error) throw new Error("Erro no upload: " + error.message)
+            else {
+                await prisma.topic.update({
+                    where: { id: topicId },
+                    data: { material_count: { increment: fileCount } }
+                })
+            }
 
             const { data: publicUrlData } = supabase.storage
             .from("EstudaAI-Files")
@@ -131,14 +154,11 @@ class StudentService {
             
             return newFile
         })
-        await prisma.topic.update({
-            where: { id: topicId },
-            data: { material_count: { increment: fileCount } }
-        })
+        
        return Promise.all(uploads)
     }
 
-    async deleteMaterial(materialId: number) {
+    async deleteMaterial(materialId: number, topicId: number) {
         const material = await prisma.material.delete({
             where: { id: materialId }
         })
@@ -148,6 +168,14 @@ class StudentService {
         .remove([material.bucket_path])
 
         if (error) throw new Error("Could not remove file: " + error.message)
+        else {
+            await prisma.topic.update({
+                where: { id: topicId },
+                data: {
+                    material_count: { decrement: 1 }
+                }
+            })
+        }
 
         return material
     }

@@ -205,8 +205,9 @@ export const getStudyPlan = async (req: Request, res: Response, next: NextFuncti
 
 export const deleteMaterial = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const materialId = Number(req.query.id)
-        const material = await studentService.deleteMaterial(materialId)
+        const materialId = Number(req.query.materialId)
+        const topicId = Number(req.query.topicId)
+        const material = await studentService.deleteMaterial(materialId, topicId)
         res.status(200).json(material)
     } catch (error) {
         next(error)
@@ -222,8 +223,31 @@ export const deleteTopic = async (req: Request, res: Response, next: NextFunctio
         next(error)
     }
 }
-// delete topic
-// edit lembrete
+
+export const editReminder = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const reminderId = Number(req.body.id)
+        const data: Lembrete = {
+            titulo: req.body.title,
+            descricao: req.body.description,
+            data: req.body.due_date
+        }
+        const reminder = await studentService.editReminder(reminderId, data)
+        res.status(200).json(reminder)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const deleteReminder = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const reminderId = Number(req.query.id)
+        const deletedReminder = await studentService.deleteReminder(reminderId)
+        res.status(200).json(deletedReminder)
+    } catch (error) {
+        next(error)
+    }
+}
 // delete lembrete
 
 export const createStudyPlan = async (req: Request, res: Response, next: NextFunction) => {
