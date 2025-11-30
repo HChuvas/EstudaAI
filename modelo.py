@@ -508,11 +508,19 @@ def transcript_test():
 
     return jsonify({"results": results}), 200
 
+@app.route("/embed", method=["POST"])
+def embed_chunk():
+    data = request.json
 
+    if not data:
+        return jsonify({"error": "Chunk vazio"}), 400
 
+    try:
+        embedding = gerar_embeddings(data.get("text"))
+    except Exception as e:
+        embedding = ""
 
-
-    
+    return jsonify({"results": embedding}), 200
 
     
 # a ser feito: 
