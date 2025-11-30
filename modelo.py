@@ -508,17 +508,21 @@ def transcript_test():
 
     return jsonify({"results": results}), 200
 
-@app.route("/embed", method=["POST"])
+@app.route("/embed", methods=["POST"])
 def embed_chunk():
-    data = request.json
+    data = request.get()
 
     if not data:
-        return jsonify({"error": "Chunk vazio"}), 400
+        return jsonify({"error": "Campo 'text' é obrigatório"}), 400
+
+    text = data["text"].strip()
+    if not text:
+        return jsonify({"error": "O texto do chunk está vazio"}), 400
 
     try:
-        embedding = gerar_embeddings(data.get("text"))
+        embedding = gerar_embeddings(text)
     except Exception as e:
-        embedding = ""
+        return jsonify({"error": f"Erro ao gerar embedding: {str(e)}"}), 500
 
     return jsonify({"results": embedding}), 200
 
