@@ -510,7 +510,7 @@ def transcript_test():
 
 @app.route("/embed", methods=["POST"])
 def embed_chunk():
-    data = request.get()
+    data = request.get_json(silent=True)
 
     if not data:
         return jsonify({"error": "Campo 'text' é obrigatório"}), 400
