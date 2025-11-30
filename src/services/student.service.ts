@@ -5,6 +5,13 @@ import type { Role } from "../types/roles.js";
 import jwt from "jsonwebtoken"
 
 class StudentService {
+    sanitizeFileName(filename: string): string {
+        return filename
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    }
+
     async registerService(body: { name: string; email: string; password: string; }) {
         const newUser = await prisma.user.create({
             data: body
@@ -114,7 +121,8 @@ class StudentService {
     async uploadMaterialsService(userId: number, topicId: number, files: Express.Multer.File[]) {
         const fileCount = files.length
         const uploads = files.map(async (file) => {
-            const path = `materials/${userId}/${topicId}/${Date.now()}-${file.originalname}`
+            const sanitizedName = this.sanitizeFileName(file.originalname)
+            const path = `materials/${userId}/${topicId}/${Date.now()}-${sanitizedName}`
 
             const { error } = await supabase.storage
             .from(`EstudaAI-Files`)
@@ -138,7 +146,7 @@ class StudentService {
 
             const newFile = await prisma.material.create({
                 data: {
-                    title: file.originalname,
+                    title: sanitizedName,
                     file_type: file.mimetype,
                     public_url: publicUrlData.publicUrl,
                     bucket_path: path,
