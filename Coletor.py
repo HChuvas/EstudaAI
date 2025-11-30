@@ -15,13 +15,11 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import OcrOptions, RapidOcrOptions
-import cv2
-#from langchain_community.embeddings import HuggingFaceEmbeddings
+from sentence_transformers import SentenceTransformer
 
-#embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-
-os.environ["PATH"] += os.pathsep + os.path.abspath("./ffmpeg/bin")
+#os.environ["PATH"] += os.pathsep + os.path.abspath("./ffmpeg/bin")
 
 ocr_opts = OcrOptions(
     do_ocr=True,
@@ -98,11 +96,15 @@ def has_audio(file_path:str):
     if clip is not None:
         return True
 
+#depreciado
 def chunk_data(text_data:str):
     splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", "\n", ".", "?", "!", " ", ""],
-        chunk_size=2000,
-        chunk_overlap=100
+        chunk_size=1500,
+        chunk_overlap=200
     )
     chunks = splitter.split_text(text_data)
     return [chunk.strip() for chunk in chunks if chunk.strip()]
+
+def gerar_embeddings(chunk):
+    return model.encode(chunk, normalize_embeddings=True).tolist()

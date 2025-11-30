@@ -186,6 +186,9 @@ def geracao_resumo_json_mode(user_prompt):
     return output.model_dump()
 
 def conversar_com_llm(conteudo:str):
+    # Receber entrada
+    # Gerar embeddings que satisfaçam a pergunta
+    # Enviar para a llm com contexto
     prompt = ChatPromptTemplate.from_template(conteudo)
     chain = prompt | llm
     response = chain.invoke({})
@@ -195,7 +198,7 @@ def gerar_plano_de_estudo(user_prompt):
     template_plano_de_estudo =  """
                                 Seu trabalho é trazer um plano de estudos, no estilo de um roadmap, para orientar um aluno em quais conteúdos priorizar, dado uma série de
                                 materiais e assuntos.
-                                O conteúdo esperado do resumo consiste de:
+                                O conteúdo esperado do plano de estudos consiste de:
 
                                 - Uma lista simplificada do fluxo geral dos conteúdos, organizada em tópicos baseados em prioridade. Essa prioridade consiste em definir
                                 o quão crucial aquele conteúdo é para que se possa compreender os assuntos seguintes. A lista deve conter todos os assuntos relevantes. Ex:
@@ -382,6 +385,10 @@ def generate_study_plan():
             for transcript in topic_transcriptions:
                 user_prompt += transcript.get("content")
         #print(user_prompt)
+
+        # Alterar a lógica para 
+        # a) fazer a busca dos k embeddings mais relevantes para o plano de estudo
+        # b) inserir esses embeddings ao invés do conteúdo em texto
 
         if user_prompt == "":
             return jsonify({"error": "Input vazio"}), 400
