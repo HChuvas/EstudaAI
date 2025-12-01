@@ -2,12 +2,12 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain_community.vectorstores.pgvector import PGVector
 from Coletor import *
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_file
 from Estruturas import *
 import json, re, requests, tempfile
-from io import BytesIO
 from supabase import create_client, Client
 from zipfile import ZipFile
 
@@ -20,6 +20,13 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv(
 llm_json = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("API_KEY"), response_mime_type="application/json")
 
 supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
+
+vector_store = PGVector(
+    connection_string=os.getenv("DATABASE_URL"),
+    embedding_function=gerar_embeddings,
+    collection_name="material_embedding"
+)
+
 
 #depreciado. código mantido para caso seja requerido futuramente.
 def parse_llm_json(response_text):
@@ -185,13 +192,33 @@ def geracao_resumo_json_mode(user_prompt):
 
     return output.model_dump()
 
-def conversar_com_llm(conteudo:str):
+def conversar_com_llm(mensagem:str):
     # Receber entrada
     # Gerar embeddings que satisfaçam a pergunta
     # Enviar para a llm com contexto
-    prompt = ChatPromptTemplate.from_template(conteudo)
+
+    prompt_template = """
+    Seu objetivo é responder a perguntas baseadas no contexto oferecido de um material:
+
+    CONTEXTO:
+    {context}
+
+    PERGUNTA:
+    {input}
+
+    IMPORTANTE:
+    Se não houver informação suficiente no contexto, diga: 'Não encontrei essa informação no material.'
+    """
+
+    docs = vector_store.similarity_search(mensagem, k=8)
+    context = "\n\n".join(doc.page_content for doc in docs)
+
+    prompt = ChatPromptTemplate.from_template(prompt_template)
     chain = prompt | llm
-    response = chain.invoke({})
+    response = chain.invoke({
+        "context": context,
+        "input": mensagem
+    })
     return response.content
 
 def gerar_plano_de_estudo(user_prompt):
@@ -333,6 +360,157 @@ def gerar_plano_de_estudo(user_prompt):
     prompt = ChatPromptTemplate.from_template(template_plano_de_estudo)
 
     chain = prompt | llm_json | parser_plano_de_estudos
+
+    output = chain.invoke({
+        "input": user_prompt
+    })
+
+    return output.model_dump()
+
+def gerar_plano_de_estudo_rag(user_prompt):
+    template_plano_de_estudo =  """
+                                Seu trabalho é trazer um plano de estudos, no estilo de um roadmap, para orientar um aluno em quais conteúdos priorizar, dado uma série de
+                                materiais e assuntos.
+                                O conteúdo esperado do plano de estudos consiste de:
+
+                                - Uma lista simplificada do fluxo geral dos conteúdos, organizada em tópicos baseados em prioridade. Essa prioridade consiste em definir
+                                o quão crucial aquele conteúdo é para que se possa compreender os assuntos seguintes. A lista deve conter todos os assuntos relevantes. Ex:
+                                        1. Introdução a Ponteiros;
+                                        2. Aritmética de Ponteiros;
+                                        3. Ponteiros Aplicados em Estrutura de Dados;
+                                        4. ...
+                                    - Uma lista expandida, estruturada com a ordem dos tópicos, explicando o motivo para aquele conteúdo ter sido escolhido naquela ordem.
+                                        OBS1: A explicação DEVE ser composta de 2 a 3 sentenças curtas.
+                                        OBS2: NÃO mostre o contador de caracteres em nenhum ponto da conversa. É necessário apenas o conteúdo. 
+                                        OBS3: A intenção desse limite é apenas para que sirva como uma breve justificativa e orientação para o que deve ser visto e por que.
+
+                                    - Ao final da lista, baseado no que já foi explicado, gere uma segunda lista com conteúdos não explicitamente mencionados que podem ser
+                                    relevantes para melhorar a compreensão do resumo. Ex:
+                                        (mantendo o contexto de aula de ponteiros)
+                                        a) Conceitos básicos de C;
+                                        b) Estruturas de dados básicas (vetores e construtores);
+                                        c) ...
+                                        OBS: Os assuntos devem ser relevantes para o conteúdo e não puxar de conhecimentos que estão muito além do escopo estudado.
+                                    REGRAS OBRIGATÓRIAS DE FORMATAÇÃO (SIGA SEMPRE):
+
+                                    1. REGRAS PARA GERAÇÃO DOS SUMÁRIOS:
+                                    - "title" e "topicTitle": uma sentença curta que sumarize exatamente o que deve ser feito.
+                                    - "description" (exceto checklist) deve ser composto de até 2 sentenças curtas e explicando a importância daquele tópico para o aprendizado.
+                                    - "justification": de duas sentenças curtas, explicando o motivo da escolha daquele método para o tópico na primeira sentaça e abrindo um gancho 
+                                    sobre a relação dessa com o próximo tópico com a segunda sentença.
+                                    - checklist "description": composto de no máximo uma sentenças curtas, explicando o que o tópico da checklist espera.
+
+                                    2. NÃO adicione explicações fora do JSON.
+
+                                    3. REGRAS DOS TÓPICOS:
+                                    - Evite enaltecer a importância do tópico de maneira expositiva dentro da justificativa. Ex. do que NÃO deve ser feito: "Este tópico é 
+                                    fundamental para compreender o conceito de ponteiros e seus operadores básicos", "Este tópico demonstra a forte relação entre ponteiros 
+                                    e arrays em C", "Compreender como ponteiros são usados na passagem de parâmetros para funções é essencial", etc.
+                                    - A justificativa deve EXPLICITAR o 'porquê' de aquele tópico ser relevante, então opte por frases que denotem correlação. Ex: "Poteiros são essenciais para aprender
+                                    como a linguagem C gerencia memória.", "Entender a relação entre Ponteiros e Arrays solidifica a base para compreensão de Estruturas de Dados mais complexas.", etc.
+
+                                    3. REGRAS DA CHECKLIST:
+                                    - Cada tópico deve ser composto de atividades concretas que permitam o enriquecimento do aprendizado do aluno.
+                                    - EVITE pedir por atividades vagas ou sugestões educadas como "Estudar 'assunto X'", "Saber aplicar tais conhecimentos", isso são meios
+                                    para que o aluno atinja os objetivos da checklist, e, portanto, não devem ser considerados como objetivos em si.
+                                    - Novamente os checklists DEVEM ser relacionados com todo o conhecimento absorsvido dos materiais recebidos: 
+                                        a) Se hoverem livros sobre o assunto como recomendações, recomende a leitura dos capítulos relacionados.
+                                        b) Se for mencionado uma lista de exercícios, ou souber que dito material possui exercícios, priorize em recomendar os exercícios desse material
+                                    - Exemplos do que se espera na geração da checklist:
+
+                                        "checklist": 
+                                            "item1": 
+                                                "title": "Leitura Obrigatória",
+                                                "orderIndex": 1,
+                                                "description": "Ler Capítulo 3 do livro 'Introdução a Algoritmos (Cormen)'"
+
+                                            "item2": 
+                                                "title": "Fichamento",
+                                                "orderIndex": 2,
+                                                "description": "Definir 'Análise de Algoritmos' e 'Complexidade'"
+
+                                            "item3": 
+                                                "title": "Videoaula Introdutória",
+                                                "orderIndex": 3,
+                                                "description": "Assistir à videoaula 'Complexidade de Algoritmos - Conceitos Iniciais'"
+
+                                            "item4": 
+                                                "title": "Praticar",
+                                                "orderIndex": 4,
+                                                "description": "Identificar a notação O de 5 loops simples"
+
+
+                                    Gere o plano de estudos seguindo o formato JSON especificado:
+
+                                        {{
+                                            "title": {{
+                                                "title": "Titulo do plano de estudos"
+                                            }},
+                                            "topics": {{
+                                                "topic1": {{
+                                                    "title": "Nome do primeiro tópico prioritário",
+                                                    "orderIndex": 1
+                                                }},
+                                                "topic2": {{
+                                                    "title": "Nome do segundo tópico prioritário",
+                                                    "orderIndex": 2
+                                                }}
+                                                ...
+                                            }},
+                                            "expandedTopics": {{
+                                                "topic1": {{
+                                                    "topicTitle": "Nome do primeiro tópico",
+                                                    "orderIndex": 1,
+                                                    "justification": "Explicação do porquê esse tópico vem nessa ordem"
+                                                }},
+                                                "topic2": {{
+                                                    "topicTitle": "Nome do segundo tópico",
+                                                    "orderIndex": 2,
+                                                    "justification": "Explicação do porquê esse tópico vem nessa ordem"
+                                                }}
+                                                ...
+                                            }},
+                                            "complementaryTopics": {{
+                                                "complemento1": {{
+                                                    "title": "Conteúdo complementar relevante",
+                                                    "description": "Descrição resumida da importância desse conteúdo adicional",
+                                                    "orderIndex": 1
+                                                }},
+                                                "complemento2": {{
+                                                    "title": "Outro conteúdo complementar",
+                                                    "description": "Descrição resumida",
+                                                    "orderIndex": 2
+                                                }}
+                                                ...
+                                            }},
+                                            "checklist": {{
+                                                "item1": {{
+                                                    "title": "Título do item da checklist",
+                                                    "orderIndex": 1,
+                                                    "description": "Descrição do que deve ser verificado / estudado"
+                                                }},
+                                                "item2": {{
+                                                    "title": "Outro item da checklist",
+                                                    "orderIndex": 2,
+                                                    "description": "Descrição resumida do item"
+                                                }}
+                                                ...
+                                            }}
+                                        }}
+
+                                    Os assuntos do plano de estudos são os seguintes {input}
+                                    """
+    
+    query = "conteúdos principais para um plano de estudos"
+
+    parser_plano_de_estudos = PydanticOutputParser(pydantic_object=SaidaPlanoDeEstudos)
+
+    prompt = ChatPromptTemplate.from_template(template_plano_de_estudo)
+
+    chain = prompt | llm_json | parser_plano_de_estudos
+
+    docs = vector_store.similarity_search(query, k=15)
+    context = "\n\n".join(doc.page_content for doc in docs)
 
     output = chain.invoke({
         "input": user_prompt
