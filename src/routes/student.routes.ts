@@ -3,6 +3,7 @@ import express from "express"
 import { createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editChecklistItem, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, markChecklistItem, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
 import { authMiddleware } from "../middlewares/authmiddleware.js";
 import { upload } from "../config/multer.js";
+import { processChunksAndEmbeddings } from "../controllers/chunks.controller.js";
 
 const studentRouter = express.Router();
 
@@ -27,6 +28,7 @@ studentRouter.get("/studyplans", authMiddleware, getStudyPlans)
 studentRouter.get("/studyplan", authMiddleware, getStudyPlan)
 studentRouter.put("/studyplan/checklist/edit", authMiddleware, editChecklistItem)
 studentRouter.put("/studyplan/checklist/mark", authMiddleware, markChecklistItem)
+studentRouter.post("/llm/embed", authMiddleware, processChunksAndEmbeddings)
 // add checklist item
 // topic transcripts
 // topic materials

@@ -1,5 +1,7 @@
 import axios from "axios";
 import { prisma } from "../database/index.js";
+import { pool } from "../config/pgvector.js";
+import { registerType, toSql } from "pgvector/pg";
 
 export class ChunkService {
 
@@ -31,10 +33,11 @@ export class ChunkService {
 
     // ---------- (3) Mandar chunk para o Flask gerar embedding ----------
     async getEmbeddingFromFlask(chunk: string): Promise<number[]> {
-        const resp = await axios.post("http://127.0.0.1:5000/embedding", {
+        console.log(chunk)
+        const resp = await axios.post("http://127.0.0.1:5000/embed", {
             text: chunk
         });
-        return resp.data.embedding;
+        return resp.data.results;
     }
 
     // ---------- (4) Salvar chunk ----------
@@ -50,12 +53,20 @@ export class ChunkService {
 
     // ---------- (5) Salvar embedding ----------
     async saveEmbedding(chunkId: number, embedding: number[]) {
-        return prisma.materialEmbedding.create({
-            data: {
-                chunk_id: chunkId,
-                embedding
-            }
-        });
+        const client = await pool.connect();
+
+    try {
+        // registre o pgvector neste client
+        registerType(client);
+
+        await client.query(
+        `INSERT INTO embeddings."MaterialEmbedding" (chunk_id, embedding)
+        VALUES ($1, $2)`,
+        [chunkId, toSql(embedding)]
+        );
+        } finally {
+            client.release();
+        }
     }
 
     // ---------- (6) Pipeline completo ----------
