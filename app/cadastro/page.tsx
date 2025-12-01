@@ -6,18 +6,16 @@ import { useState } from 'react'
 import { FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 
-interface FormaCerta {
-  nome: string
-  email: string
-  senha: string
-  confirmarSenha: string
+interface FormaCerta  {
+  nome: string;
+  email: string;
+  senha: string; //tirei confirmar senha, pois não tem no back
 }
 
 interface FormaErrada {
-  nome?: string
-  email?: string
-  senha?: string
-  confirmarSenha?: string
+  nome?: string;
+  email?: string;
+  senha?: string;
 }
 
 export default function Cadastro() {
@@ -27,9 +25,8 @@ export default function Cadastro() {
     nome: '',
     email: '',
     senha: '',
-    confirmarSenha: '',
   })
-
+  
   const [formaErrada, setFormaErrada] = useState<FormaErrada>({})
   const [cadastrando, setCadastrando] = useState(false)
 
@@ -50,10 +47,6 @@ export default function Cadastro() {
       erros.senha = 'A senha é obrigatória.'
     } else if (formaCerta.senha.length < 8) {
       erros.senha = 'A senha deve ter pelo menos 8 caracteres.'
-    }
-
-    if (formaCerta.confirmarSenha !== formaCerta.senha) {
-      erros.confirmarSenha = 'As senhas não coincidem.'
     }
 
     setFormaErrada(erros)
@@ -85,41 +78,37 @@ export default function Cadastro() {
     setCadastrando(true)
 
     try {
-      // Salvar no localStorage
-      const usuariosExistentes = JSON.parse(
-        localStorage.getItem('usuarioCadastrado') || '[]'
-      )
+      console.log('Formulário enviado com sucesso:', formaCerta);
+      const response = await fetch('http://localhost:8080/users/register', { //trocar para o endpoint correto da API
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formaCerta.nome,
+          email: formaCerta.email,
+          password: formaCerta.senha,
+        }),
+      });
 
-      // Verifica se o email já está cadastrado
-      const usuarioExistente = usuariosExistentes.find(
-        (user: any) => user.email === formaCerta.email
-      )
-
-      if (usuarioExistente) {
-        setFormaErrada({ email: 'Este e-mail já está cadastrado.' })
-        return
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao cadastrar usuário.');
       }
 
-      const novoUsuario = {
-        nome: formaCerta.nome,
-        email: formaCerta.email,
-        senha: formaCerta.senha,
-      }
-
-      const todosUsuarios = [...usuariosExistentes, novoUsuario]
-      localStorage.setItem('usuarioCadastrado', JSON.stringify(todosUsuarios))
-
-      console.log('Cadastro bem-sucedido:', novoUsuario)
+      const data = await response.json();
+      console.log('Cadastro bem-sucedido:', data);
       
-      // Redireciona para a rota "/" (login)
-      router.push('/')
+      router.push('/'); //ja redireciona para login
     } catch (error) {
-      console.error('Erro no cadastro:', error)
-      setFormaErrada({ email: 'Erro ao realizar cadastro. Tente novamente.' })
+      console.error('Erro no cadastro:', error);
+      setFormaErrada({ 
+        email: error instanceof Error ? error.message : 'Erro ao realizar cadastro. Tente novamente.' 
+      });
     } finally {
-      setCadastrando(false)
+      setCadastrando(false);
     }
-  }
+  };
 
   return (
     <Background>
@@ -177,23 +166,8 @@ export default function Cadastro() {
                 <p className="text-red-500 text-sm mt-1">{formaErrada.senha}</p>
               )}
             </div>
-            
-            <div className="mb-8">
-              <input 
-                type="password" 
-                name="confirmarSenha"
-                placeholder="Confirmar senha" 
-                value={formaCerta.confirmarSenha}
-                onChange={handleChange}
-                className={`text-[#494949] w-full border-2 rounded-lg px-4 py-3  focus:outline-none ${
-                  formaErrada.confirmarSenha ? 'border-red-500' : 'border-[#494949] focus:border-[#494949]'
-                }`}
-              /> 
-              {formaErrada.confirmarSenha && (
-                <p className="text-red-500 text-sm mt-1">{formaErrada.confirmarSenha}</p>
-              )}
-            </div>
-            
+          
+            {/* Configs do botão de Cadastrar */}
             <button 
               type="submit"
               disabled={cadastrando}
@@ -207,7 +181,7 @@ export default function Cadastro() {
         <div className="text-center w-full">
           <p className="text-[#494949] text-sm font-montserrat">
             Já possui uma conta?{' '}
-            <Link href="/login" className="text-[#098842] font-bold hover:text-[#087c3a] transition-colors">
+            <Link href="/" className="text-[#098842] font-bold hover:text-[#087c3a] transition-colors">
               Login
             </Link>
           </p>

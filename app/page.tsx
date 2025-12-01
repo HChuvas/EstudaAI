@@ -19,34 +19,34 @@ export default function Login() {
     e.preventDefault()
     setEntrando(true)
     setErro('')
-
     try {
-      const usuarioCadastrado = JSON.parse(
-        localStorage.getItem('usuarioCadastrado') || '[]'
-      )
+      const response = await fetch('http://localhost:8080/users/login', {
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+           body: JSON.stringify({
+        email: credenciais.email,
+        password: credenciais.senha,
+      }),
+    });
 
-      // Verifica se existe usuário com esse email e senha
-      const usuarioEncontrado = usuarioCadastrado.find(
-        (user: any) => user.email === credenciais.email && user.senha === credenciais.senha
-      )
+      const data = await response.json(); 
 
-      if (usuarioEncontrado) {
-        console.log('Login bem-sucedido!', usuarioEncontrado)
-        
-        // Salva que usuário está logado
-        localStorage.setItem('usuarioLogado', JSON.stringify(usuarioEncontrado))
-        
-        // Redireciona para a homepage
-        router.push('/homepage')
-      } else {
-        setErro('E-mail ou senha incorretos')
-      }
-    } catch (error) {
-      setErro('Erro ao fazer login')
-    } finally {
-      setEntrando(false)
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao fazer login.');
     }
+
+    console.log('Seja bem-vindo', data);
+    router.push('/homepage'); //deve ir dps do login pra home 
+    
+  } catch (error) {
+    console.error('Erro no login:', error);
+    setErro(error instanceof Error ? error.message : 'Erro ao fazer login. Tente novamente.');
+  } finally {  
+    setEntrando(false)
   }
+}
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -120,3 +120,4 @@ export default function Login() {
     </Background>
   )
 }
+
