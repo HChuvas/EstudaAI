@@ -22,7 +22,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
             res.status(500).json({error: user.error})
         }
         else {
-            const acessToken = await userService.getAcessToken(user.id, user.role)
+            const accessToken = await userService.getAcessToken(user.id, user.role)
             const userId = user.id
             const userRole = user.role
             res.status(200).json({
@@ -30,7 +30,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                acessToken
+                accessToken
             })
         }
     } catch (error) {

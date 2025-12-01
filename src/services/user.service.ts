@@ -54,8 +54,8 @@ class UserService {
     async getAcessToken(userId: number, role: Role) {
         const secret = process.env.ACCESS_TOKEN_SECRET
         if(!secret) throw new Error("ACCESS TOKEN NOT DEFINED")
-        const acessToken = jwt.sign({id: userId, userRole: role}, secret, {expiresIn: "1h"})
-        return acessToken
+        const accessToken = jwt.sign({id: userId, userRole: role}, secret, {expiresIn: "1h"})
+        return accessToken
     }
 }
 
