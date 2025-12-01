@@ -33,8 +33,8 @@ export default function Login() {
 
       const data = await response.json(); 
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Erro ao fazer login.');
+    if (data.error) {
+      throw new Error(data.error || 'Erro ao fazer login.');
     }
 
     console.log('Seja bem-vindo', data);
