@@ -23,7 +23,7 @@ supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_
 
 vector_store = PGVector(
     connection_string=os.getenv("DATABASE_URL"),
-    embedding_function=gerar_embeddings,
+    embedding_function=embedding_model,
     collection_name="material_embedding"
 )
 
@@ -711,5 +711,9 @@ def embed_chunk():
 # 3. verificar persistência da conversa dentro de um tópico
     
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    #app.run(host="0.0.0.0", port=5000)
+
+    texto_teste = "Me diga o assunto do material"
+    resposta = conversar_com_llm(texto_teste)
+    print("Resposta:", resposta)
 

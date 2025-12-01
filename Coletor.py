@@ -15,9 +15,11 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import OcrOptions, RapidOcrOptions
-from sentence_transformers import SentenceTransformer
+from langchain_huggingface import HuggingFaceEmbeddings
 
-embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+embedding_model = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+)
 
 #os.environ["PATH"] += os.pathsep + os.path.abspath("./ffmpeg/bin")
 
