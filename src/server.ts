@@ -4,7 +4,7 @@ import { router } from "./router.js"
 import dotenv from "dotenv"
 
 const app = express()
-dotenv.config({path: "../.env"})
+dotenv.config()
 
 app.use(express.json())
 app.use(cors({
