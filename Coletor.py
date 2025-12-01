@@ -107,4 +107,4 @@ def chunk_data(text_data:str):
     return [chunk.strip() for chunk in chunks if chunk.strip()]
 
 def gerar_embeddings(chunk):
-    return model.encode(chunk, normalize_embeddings=True).tolist()
+    return embedding_model.encode(chunk, normalize_embeddings=True).tolist()
