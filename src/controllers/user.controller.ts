@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express"
 import { CreateUserRequestSchema } from "../schemas/UsersRequestSchema.js"
 import { userService } from "../services/user.service.js"
+import type { Role } from "../types/roles.js"
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -17,17 +18,21 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         const { email, password } = req.body
 
         const user = await userService.loginService(email, password)
-        const acessToken = await userService.getAcessToken(user.id, user.role)
-        const userId = user.id
-        const userRole = user.role
-        res.status(200).json({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            acessToken
-          })
-        
+        if(user.error) {
+            res.status(500).json({error: user.error})
+        }
+        else {
+            const acessToken = await userService.getAcessToken(user.id, user.role)
+            const userId = user.id
+            const userRole = user.role
+            res.status(200).json({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                acessToken
+            })
+        }
     } catch (error) {
         next(error) 
     }

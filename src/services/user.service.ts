@@ -13,7 +13,7 @@ class UserService {
         })
 
         if(!user) {
-            throw new Error("Credenciais Inválidas")
+            return { error: "Credenciais inválidas. Tente novamente" }
         }
 
         let role: Role
