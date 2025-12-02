@@ -369,7 +369,7 @@ def gerar_plano_de_estudo(user_prompt):
 
     return output.model_dump()
 
-def gerar_plano_de_estudo_rag(user_prompt):
+def gerar_plano_de_estudo_rag():
     template_plano_de_estudo =  """
                                 Seu trabalho é trazer um plano de estudos, no estilo de um roadmap, para orientar um aluno em quais conteúdos priorizar, dado uma série de
                                 materiais e assuntos.
@@ -592,10 +592,10 @@ def chat():
     try:
         data = request.get_json()
 
-        if not data or 'texto' not in data:
+        if not data or 'message' not in data:
             return jsonify({"erro": "Envie uma mensagem. Campo 'mensagem' obrigatório."}), 400
         
-        text = data['texto']
+        text = data['message']
         response = conversar_com_llm(text)
 
         return jsonify({"resposta": response})
