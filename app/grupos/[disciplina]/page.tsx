@@ -3,7 +3,7 @@
 import { Navbar } from "@/app/components/navbar";
 import Image from "next/image";
 import { useState, useMemo, useCallback } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Topic = {
   id: string;
@@ -20,13 +20,17 @@ export default function TopicosPage() {
     return parts.length ? parts[parts.length - 1] : "disciplina";
   }, [pathname]);
 
-  const disciplineName = useMemo(() => {
-    return disciplineSlug
-      .replace(/[-_]/g, " ")
-      .split(" ")
-      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-      .join(" ");
-  }, [disciplineSlug]);
+  // const disciplineName = useMemo(() => {
+  //   return disciplineSlug
+  //     .replace(/[-_]/g, " ")
+  //     .split(" ")
+  //     .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+  //     .join(" ");
+  // }, [disciplineSlug]);
+
+  const { id } = useParams();
+  const search = useSearchParams();
+  const disciplineName = search.get("nomeDisciplina");
 
   const [topics, setTopics] = useState<Topic[]>([
     { id: "t1", title: "Ponteiros em C", filesCount: 2 },

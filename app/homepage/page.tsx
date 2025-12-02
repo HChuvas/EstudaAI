@@ -44,7 +44,7 @@ export default function HomePage() {
       // Limpa campo + fecha modal
       setNovaDisciplina("");
       setShowModal(false);
-      router.push(`grupos/${data.name}`)
+      router.push(`grupos/${data.id}?nomeDisciplina=${data.name}`)
     } catch (err) {
       console.error("Erro ao criar disciplina:", err);
     }
@@ -82,7 +82,7 @@ export default function HomePage() {
             {disciplinas.map((disciplina) => (
               <Link 
                 key={disciplina.id}
-                href={`/grupos/${disciplina.name}`}
+                href={`/grupos/${disciplina.id}?nomeDisciplina=${disciplina.name}`}
                 className="block p-3 bg-[#098842] text-white hover:bg-white hover:text-[#098842] rounded-xl whitespace-nowrap overflow-hidden text-ellipsis"
               >
                 {disciplina.name}
