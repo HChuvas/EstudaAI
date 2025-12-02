@@ -1,10 +1,11 @@
 'use client';
 import Image from "next/image";
 import { useCallback, useEffect, useState, useRef } from 'react';
-import LoadingPage from "../components/userStatePages/loading"
-import ErrorPage from "../components/userStatePages/error"
-import ModalConfirmacao from "../components/userStatePages/modalConfirmarAcao"; 
-import { Navbar } from "../components/navbar";
+import LoadingPage from "../../../components/userStatePages/loading"
+import ErrorPage from "../../../components/userStatePages/error"
+import ModalConfirmacao from "../../../components/userStatePages/modalConfirmarAcao"; 
+import { Navbar } from "../../../components/navbar";
+import { useSearchParams } from 'next/navigation';
 
 type ConteudoData = {
   id: number;
@@ -36,6 +37,7 @@ type Chat = {
 }
 
 export default function Page() {
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState('');
@@ -300,19 +302,20 @@ export default function Page() {
     if (event.key === 'Enter' && mensagem.trim() && !chatProcessando) {
       handleEnviarMensagem();
     }
-  }, [mensagem, chatProcessando, handleEnviarMensagem]);
+    }, [mensagem, chatProcessando, handleEnviarMensagem]);
 
   useEffect(() => {
+    const subjectIdParam = searchParams.get('subjectId');
     const fetchTopicoData = async() => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/topico');
+        const response = await fetch(`/students/subjects/topics?subjectId=${subjectIdParam}`);
 
         if (!response.ok) throw new Error("Failed to fetch Users");
         const data = await response.json();
-        
+          
         setTopicoData(data);
 
       } catch (err) {
