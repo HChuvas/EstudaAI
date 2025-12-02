@@ -32,11 +32,10 @@ export default function Login() {
     });
 
       const data = await response.json(); 
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Erro ao fazer login.');
+    if (data.error) {
+      throw new Error(data.error || 'Erro ao fazer login.');
     }
-
+    localStorage.setItem('accessToken', data.accessToken)
     console.log('Seja bem-vindo', data);
     router.push('/homepage'); //deve ir dps do login pra home 
     

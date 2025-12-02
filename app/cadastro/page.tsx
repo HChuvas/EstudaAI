@@ -79,7 +79,7 @@ export default function Cadastro() {
 
     try {
       console.log('Formulário enviado com sucesso:', formaCerta);
-      const response = await fetch('http://localhost:8080/users/register', { //trocar para o endpoint correto da API
+      const response = await fetch('http://localhost:8080/students/register', { //trocar para o endpoint correto da API
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
