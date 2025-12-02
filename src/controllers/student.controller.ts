@@ -244,6 +244,16 @@ export const topicMaterials = async (req: Request, res: Response, next: NextFunc
     }
 }
 
+export const topicMessages = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topicId = Number(req.query.topicId)
+        const messages = await studentService.topicMessages(topicId)
+        res.status(200).json(messages)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const editReminder = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const reminderId = Number(req.body.id)

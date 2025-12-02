@@ -197,6 +197,12 @@ class StudentService {
         return materialUrls
     }
 
+    async topicMessages(topicId: number) {
+        return prisma.message.findMany({
+            where: { topic_id: topicId }
+        })
+    }
+
     async getTranscripts(topicIds: Array<number>) {
         return Promise.all(topicIds.map(async (id) => {
             return prisma.transcript.findMany({
