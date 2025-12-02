@@ -141,7 +141,7 @@ export default function TopicosPage() {
         console.error("Erro ao criar tópico:", await response.text());
         return;
       }
-      
+
       setTopics(prev => prev.filter(t => t.id !== id));
 
     } catch (error) {
@@ -150,7 +150,7 @@ export default function TopicosPage() {
   }
 
   function openTopic(topicId: string) {
-    router.push(`/grupos/${disciplineSlug}/topico/${topicId}`);
+    router.push(`/students/subjects/topic/${topicId}`)
   }
 
   const handleFilesAdd = useCallback((files: FileList | null) => {
@@ -297,7 +297,7 @@ export default function TopicosPage() {
                 key={plan.id}
                 className={`${cardClass} bg-white flex flex-col justify-between`}
                 onClick={() => {
-                  router.push(`/grupos/${disciplineSlug}/plano/${plan.id}`);
+                  router.push(`/students/studyplan/${plan.id}`); //não foi colocado id na pasta studyplan ainda
                 }}
                 role="button"
                 tabIndex={0}
