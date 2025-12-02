@@ -1,6 +1,6 @@
 import express from "express"
 
-import { createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editChecklistItem, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, markChecklistItem, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, uploadMaterials } from "../controllers/student.controller.js";
+import { createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editChecklistItem, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, markChecklistItem, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, topicMaterials, topicSummaries, uploadMaterials } from "../controllers/student.controller.js";
 import { authMiddleware } from "../middlewares/authmiddleware.js";
 import { upload } from "../config/multer.js";
 import { processChunksAndEmbeddings } from "../controllers/chunks.controller.js";
@@ -31,7 +31,8 @@ studentRouter.put("/studyplan/checklist/mark", authMiddleware, markChecklistItem
 studentRouter.post("/llm/embed", authMiddleware, processChunksAndEmbeddings)
 // add checklist item
 // topic transcripts
-// topic materials
+studentRouter.get("/topic/materials", authMiddleware, topicMaterials)
+studentRouter.get("/topic/summaries", authMiddleware, topicSummaries)
 // topic summary
 // chat
 // load messages

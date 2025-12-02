@@ -255,6 +255,12 @@ class StudentService {
         })
     }
 
+    async topicSummaries(topicId: number) {
+        return prisma.summary.findMany({
+            where: { topic_id: topicId }
+        })
+    }
+
     async getStudyPlans(subjectId: number) {
         return prisma.studyPlan.findMany({
             where: { subject: { id: subjectId } }

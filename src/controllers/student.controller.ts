@@ -224,6 +224,26 @@ export const deleteTopic = async (req: Request, res: Response, next: NextFunctio
     }
 }
 
+export const topicSummaries = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topicId = Number(req.query.topicId)
+        const summaries = await studentService.topicSummaries(topicId)
+        res.status(200).json(summaries)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const topicMaterials = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topicId = Number(req.query.topicId)
+        const materials = await studentService.getTopicMaterials(topicId)
+        res.status(200).json(materials)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const editReminder = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const reminderId = Number(req.body.id)
