@@ -45,10 +45,11 @@ export default function TopicosPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [plans, setStudyPlans] = useState<StudyPlan[]>([]);
 
+  const [createdTopicId, setCreatedTopicId] = useState("")
   const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
   const [newTopicTitle, setNewTopicTitle] = useState("");
 
-  const [isPlanUploadOpen, setIsPlanUploadOpen] = useState(false);
+  const [isFileUploadOpen, setisFileUploadOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -117,8 +118,9 @@ export default function TopicosPage() {
 
       const data = await response.json()
     
+      setCreatedTopicId(data.id)
       setNewTopicTitle("");
-      setIsUploading(true);
+      setisFileUploadOpen(true)
     } catch (error) {
       console.error("Erro ao criar tópico:", error)
     }
@@ -164,17 +166,20 @@ export default function TopicosPage() {
     setSelectedFiles((s) => s.filter((_, i) => i !== index));
   }
 
-  async function handleSendPlanFiles() {
+  async function handleSendTopicFiles() {
     if (selectedFiles.length === 0) return;
     setIsUploading(true);
 
     const form = new FormData();
-    form.append("planId", "plano-ed");
+    form.append("topicId", createdTopicId);
     selectedFiles.forEach((f) => form.append("files", f));
 
     try {
-      const res = await fetch("/api/upload", {
+      const res = await fetch("http://localhost:8080/students/materials/upload", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        },
         body: form,
       });
 
@@ -182,12 +187,13 @@ export default function TopicosPage() {
         console.error("Upload falhou");
       } else {
         setSelectedFiles([]);
-        setIsPlanUploadOpen(false);
+        setisFileUploadOpen(false);
       }
     } catch (err) {
       console.error("Erro no upload:", err);
     } finally {
       setIsUploading(false);
+      router.push(`/students/subjects/topic/${createdTopicId}`)
     }
   }
 
@@ -257,7 +263,7 @@ export default function TopicosPage() {
           <div className="flex flex-wrap gap-6">
             <div
               className={`${cardClass} flex items-center justify-center`}
-              onClick={() => setIsPlanUploadOpen(true)}
+              onClick={() => setisFileUploadOpen(true)}
             >
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2">
@@ -326,13 +332,13 @@ export default function TopicosPage() {
       )}
 
       {/* Modal de upar arquivo */}
-      {isPlanUploadOpen && (
+      {isFileUploadOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 pb-12 bg-black/40">
           <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden">
             <div className="bg-[#098842] h-16 flex justify-end items-center px-6">
               <button
                 onClick={() => {
-                  setIsPlanUploadOpen(false);
+                  setisFileUploadOpen(false);
                   setSelectedFiles([]);
                 }}
                 aria-label="Fechar"
@@ -455,7 +461,7 @@ export default function TopicosPage() {
 
                     <button
                       className="px-6 py-3 bg-[#098842] text-white rounded disabled:opacity-60"
-                      onClick={handleSendPlanFiles}
+                      onClick={handleSendTopicFiles}
                       disabled={isUploading || selectedFiles.length === 0}
                     >
                       {isUploading ? "Enviando..." : "Enviar"}
