@@ -120,14 +120,33 @@ export default function TopicosPage() {
     
       setCreatedTopicId(data.id)
       setNewTopicTitle("");
+      setIsAddTopicOpen(false)
       setisFileUploadOpen(true)
     } catch (error) {
       console.error("Erro ao criar tópico:", error)
     }
   }
 
-  function handleDeleteTopic(id: string) {
-    setTopics((s) => s.filter((t) => t.id !== id));
+  async function handleDeleteTopic(id: string) {
+    try {
+      const response = await fetch(`http://localhost:8080/students/topics/delete?id=${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Erro ao criar tópico:", await response.text());
+        return;
+      }
+      
+      setTopics(prev => prev.filter(t => t.id !== id));
+
+    } catch (error) {
+      console.log("Erro ao deletar tópico:", error)
+    }
   }
 
   function openTopic(topicId: string) {
