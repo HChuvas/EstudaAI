@@ -210,7 +210,9 @@ def conversar_com_llm(mensagem:str):
     Se não houver informação suficiente no contexto, diga: 'Não encontrei essa informação no material.'
     """
 
-    docs = vector_store.similarity_search(mensagem, k=8)
+    emb = embedding_model.embed_query(mensagem)
+
+    docs = vector_store.similarity_search(emb, k=8)
     context = "\n\n".join(doc.page_content for doc in docs)
 
     prompt = ChatPromptTemplate.from_template(prompt_template)
