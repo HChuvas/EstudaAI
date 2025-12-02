@@ -212,7 +212,7 @@ def conversar_com_llm(mensagem:str):
 
     emb = embedding_model.embed_query(mensagem)
 
-    docs = vector_store.similarity_search(emb, k=8)
+    docs = vector_store.similarity_search_by_vector(emb, k=8)
     context = "\n\n".join(doc.page_content for doc in docs)
 
     prompt = ChatPromptTemplate.from_template(prompt_template)
@@ -510,12 +510,12 @@ def gerar_plano_de_estudo_rag(user_prompt):
     prompt = ChatPromptTemplate.from_template(template_plano_de_estudo)
 
     chain = prompt | llm_json | parser_plano_de_estudos
-
-    docs = vector_store.similarity_search(query, k=15)
+    emb = embedding_model.embed_query(query)
+    docs = vector_store.similarity_search_by_vector(emb, k=15)
     context = "\n\n".join(doc.page_content for doc in docs)
 
     output = chain.invoke({
-        "input": user_prompt
+        "input": context
     })
 
     return output.model_dump()
