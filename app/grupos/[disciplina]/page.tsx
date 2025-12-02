@@ -2,14 +2,24 @@
 
 import { Navbar } from "@/app/components/navbar";
 import Image from "next/image";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Topic = {
   id: string;
   title: string;
-  filesCount: number;
+  material_count: number;
+  subject_id: number;
+  created_at: Date;
 };
+
+type StudyPlan = {
+  id: number,
+  userId: number,
+  discipline_id: number,
+  title: string,
+  created_at: Date
+}
 
 export default function TopicosPage() {
   const pathname = usePathname() || "";
@@ -28,14 +38,12 @@ export default function TopicosPage() {
   //     .join(" ");
   // }, [disciplineSlug]);
 
-  const { id } = useParams();
+  const { disciplina } = useParams();
   const search = useSearchParams();
   const disciplineName = search.get("nomeDisciplina");
 
-  const [topics, setTopics] = useState<Topic[]>([
-    { id: "t1", title: "Ponteiros em C", filesCount: 2 },
-    { id: "t2", title: "Notação Assintótica", filesCount: 2 }
-  ]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [plans, setStudyPlans] = useState<StudyPlan[]>([]);
 
   const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
   const [newTopicTitle, setNewTopicTitle] = useState("");
@@ -44,17 +52,76 @@ export default function TopicosPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  function handleAddTopic() {
-    if (!newTopicTitle.trim()) return;
-    const newT: Topic = {
-      id: String(Date.now()),
-      title: newTopicTitle.trim(),
-      filesCount: 0,
-    };
 
-    setTopics((s) => [newT, ...s]);
-    setNewTopicTitle("");
-    setIsAddTopicOpen(false);
+  useEffect(() => {
+    async function fetchTopics() {
+      try {
+      const response = await fetch(`http://localhost:8080/students/subjects/topics?subjectId=${disciplina}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+
+      const data = await response.json();
+      setTopics(data)      
+      } catch (error) {
+        console.error("Erro ao criar disciplina:", error);
+      }  
+      }
+
+      async function fetchStudyPlans() {
+        try {
+          const response = await fetch(`http://localhost:8080/students/studyplans?subjectId=${disciplina}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+
+        const data = await response.json();
+        const plans = data.map((p: any) => ({
+          ...p,
+          created_at: new Date(p.created_at),
+        }));
+
+        setStudyPlans(plans)
+        } catch (error) {
+          console.error("Erro ao pegar planos de estudos:", error)
+        }
+      }
+    fetchStudyPlans()
+    fetchTopics()
+  }, [disciplina])
+
+  async function handleAddTopic() {
+    try {
+      if (!newTopicTitle.trim()) return;
+      const response = await fetch("http://localhost:8080/students/topics/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        },
+        body: JSON.stringify({
+          "subjectId": disciplina,
+          "title": newTopicTitle
+        })
+      })
+      if (!response.ok) {
+        console.error("Erro ao criar tópico:", await response.text());
+        return;
+      }
+
+      const data = await response.json()
+    
+      setNewTopicTitle("");
+      setIsUploading(true);
+    } catch (error) {
+      console.error("Erro ao criar tópico:", error)
+    }
   }
 
   function handleDeleteTopic(id: string) {
@@ -167,7 +234,7 @@ export default function TopicosPage() {
                 </div>
 
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm text-[#686464]">Arquivos adicionados: {t.filesCount}</p>
+                  <p className="text-sm text-[#686464]">Arquivos adicionados: {t.material_count}</p>
 
                   <button
                     onClick={(e) => {
@@ -200,25 +267,29 @@ export default function TopicosPage() {
               </div>
             </div>
 
-            <div
-              className={`${cardClass} bg-white flex flex-col justify-between`}
-              onClick={() => {
-                router.push(`/grupos/${disciplineSlug}/plano/ed`);
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") router.push(`/grupos/${disciplineSlug}/plano/ed`);
-              }}
-            >
-              <div>
-                <h3 className="font-medium text-lg text-[#3b3b3b]">Plano de Estudos ED</h3>
-              </div>
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`${cardClass} bg-white flex flex-col justify-between`}
+                onClick={() => {
+                  router.push(`/grupos/${disciplineSlug}/plano/${plan.id}`);
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <div>
+                  <h3 className="font-medium text-lg text-[#3b3b3b]">
+                    {plan.title}
+                  </h3>
+                </div>
 
-              <div className="mt-2">
-                <p className="text-sm text-[#686464]">Arquivos adicionados: 2</p>
+                <div className="mt-2">
+                  <p className="text-sm text-[#686464]">
+                    Adicionado em: {`${plan.created_at.getDay()}/${plan.created_at.getMonth() + 1}/${plan.created_at.getFullYear()}`}
+                  </p>
+                </div>
               </div>
-            </div>
+            ))}
 
           </div>
         </div>
