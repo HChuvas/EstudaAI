@@ -2,9 +2,16 @@
 import { Navbar } from "../components/navbar";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { studentServices } from "../services/student.services";
 
+
+type Disciplina = {
+  id: number,
+  name: string,
+  userId: number
+}
 const disciplinasIniciais = [
   { id: "estrutura-de-dados", nome: "Estrutura de Dados" },
   { id: "poo", nome: "Programação Orientada a Objetos" },
@@ -14,25 +21,52 @@ const disciplinasIniciais = [
 
 export default function HomePage() {
   const router = useRouter();
-  const [disciplinas, setDisciplinas] = useState(disciplinasIniciais);
+  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [novaDisciplina, setNovaDisciplina] = useState("");
 
-  const adicionarDisciplina = () => {
-    if (novaDisciplina.trim()) {
-      const novaDisciplinaObj = {
-        id: novaDisciplina.toLowerCase().replace(/\s+/g, '-'),
-        nome: novaDisciplina
-      };
-      
-      setDisciplinas([...disciplinas, novaDisciplinaObj]);
+  async function createSubject() {
+    try {
+      const response = await fetch("http://localhost:8080/students/subjects/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify({ name: novaDisciplina }),
+      });
+
+      const data = await response.json();
+
+      // Adicionar nova disciplina à lista sem refetch
+      setDisciplinas((prev) => [...prev, data]);
+
+      // Limpa campo + fecha modal
       setNovaDisciplina("");
       setShowModal(false);
-      
-      // Redireciona para a página da nova disciplina
-      //router.push(`/grupos/${novaDisciplinaObj.id}`);
+      router.push(`grupos/${data.name}`)
+    } catch (err) {
+      console.error("Erro ao criar disciplina:", err);
     }
-  };
+  }
+
+  useEffect(() => {
+    async function fetchUser() {
+      const response = await fetch("http://localhost:8080/students/subjects", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+
+      const data = await response.json();
+      setDisciplinas(data)
+      console.log("User:", data);
+    }
+
+    fetchUser();
+  }, []);
 
   return (
     <div className="w-screen min-h-screen">
@@ -48,10 +82,10 @@ export default function HomePage() {
             {disciplinas.map((disciplina) => (
               <Link 
                 key={disciplina.id}
-                href={`/grupos/${disciplina.id}`}
+                href={`/grupos/${disciplina.name}`}
                 className="block p-3 bg-[#098842] text-white hover:bg-white hover:text-[#098842] rounded-xl whitespace-nowrap overflow-hidden text-ellipsis"
               >
-                {disciplina.nome}
+                {disciplina.name}
               </Link>
             ))}
           </nav>
@@ -130,16 +164,16 @@ export default function HomePage() {
                   onChange={(e) => setNovaDisciplina(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#098842] focus:border-transparent"
                   placeholder="Digite o nome da disciplina"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      adicionarDisciplina();
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && novaDisciplina.trim()) {
+                      createSubject();
                     }
                   }}
                 />
               </div>
 
               <button
-                onClick={adicionarDisciplina}
+                onClick={createSubject}
                 className="w-full py-3 bg-[#098842] text-white rounded-lg hover:bg-[#098842]/90 font-medium"
                 disabled={!novaDisciplina.trim()}
               >
