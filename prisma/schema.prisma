@@ -86,7 +86,6 @@ model Message {
   userId   Int?
   topic_id Int
   content  String
-  title    String
   user     User?  @relation(fields: [userId], references: [id])
 
   @@schema("public")

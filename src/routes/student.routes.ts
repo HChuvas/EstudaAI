@@ -1,6 +1,6 @@
 import express from "express"
 
-import { chat, createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editChecklistItem, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, markChecklistItem, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, topicMaterials, topicMessages, topicSummaries, uploadMaterials } from "../controllers/student.controller.js";
+import { chat, createReminder, createStudyPlan, createSubject, createTopic, deleteMaterial, deleteReminder, deleteStudyPlan, deleteTopic, editChecklistItem, editReminder, getAISummaryAndReminders, getReminders, getStudyPlan, getStudyPlans, getSubjects, getSubjectTopics, loadMessages, markChecklistItem, registerStudent, sendMaterialsToLLMAndSaveTranscripts, sendTranscriptsForStudyPlan, topicMaterials, topicMessages, topicSummaries, uploadMaterials } from "../controllers/student.controller.js";
 import { authMiddleware } from "../middlewares/authmiddleware.js";
 import { upload } from "../config/multer.js";
 import { getRelevantChunks, processChunksAndEmbeddings } from "../controllers/chunks.controller.js";
@@ -35,6 +35,6 @@ studentRouter.get("/topic/materials", authMiddleware, topicMaterials)
 studentRouter.get("/topic/summaries", authMiddleware, topicSummaries)
 studentRouter.get("/topic/messages", authMiddleware, topicMessages)
 studentRouter.post("/llm/chat", authMiddleware, getRelevantChunks)
-// load messages
+studentRouter.get("/topic/messages", authMiddleware, loadMessages)
 
 export default studentRouter

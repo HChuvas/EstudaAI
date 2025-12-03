@@ -402,6 +402,22 @@ class StudentService {
             where: { id: planId }
         })
     }
+
+    async loadMessages(topicId: number) {
+        return await prisma.message.findMany({
+            where: { topic_id: topicId }
+        })
+    }
+
+    async saveMessage(message: string, userId: number | null , topicId: number) {
+        return await prisma.message.create({
+            data: {
+                content: message,
+                topic_id: topicId,
+                userId
+            }
+        })
+    }
 }
 
 export const studentService = new StudentService()

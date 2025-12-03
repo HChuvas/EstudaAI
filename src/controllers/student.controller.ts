@@ -335,3 +335,13 @@ export const chat = async (req: Request, res: Response, next: NextFunction) => {
         next(error)
     }
 }
+
+export const loadMessages = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const topicId = Number(req.query.topicId)
+        const messages = await studentService.loadMessages(topicId)
+        res.status(200).json(messages)
+    } catch (error) {
+        next(error)
+    }
+}
