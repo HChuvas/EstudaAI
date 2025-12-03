@@ -333,7 +333,7 @@ def chat():
     try:
         data = request.get_json()
 
-        if not data or 'message' or 'context' not in data:
+        if not data:
             return jsonify({"erro": "Envie uma mensagem. Campo 'mensagem' obrigatório."}), 400
         
         text = data['message']
