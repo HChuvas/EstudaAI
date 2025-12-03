@@ -58,7 +58,7 @@ export default function Page() {
     },
     {
       id: 2,
-      nome: 'Slide_Aula_Ponteiros_suahdasuhdasiuhdasiuhdasudh.pdf',
+      nome: 'Slide_Aula_Ponteiros.pdf',
     },
     {
       id: 3,
