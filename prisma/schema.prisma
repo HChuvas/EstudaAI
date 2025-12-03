@@ -204,7 +204,7 @@ model MaterialChunk {
   text        String
   embedding   MaterialEmbedding?
 
-  transcript Transcript @relation(fields: [transcript_id], references: [id])
+  transcript Transcript @relation(fields: [transcript_id], references: [id], onDelete: Cascade)
 
   @@schema("embeddings")
 }
@@ -214,7 +214,7 @@ model MaterialEmbedding {
   chunk_id Int     @unique
   embedding Unsupported("vector(384)")
 
-  chunk MaterialChunk @relation(fields: [chunk_id], references: [id])
+  chunk MaterialChunk @relation(fields: [chunk_id], references: [id], onDelete: Cascade)
 
   @@schema("embeddings")
 }

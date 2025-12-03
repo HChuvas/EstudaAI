@@ -5,6 +5,54 @@ import { registerType, toSql } from "pgvector/pg";
 
 export class ChunkService {
 
+    // ---------- (A) Fazer embedding da query usando Flask ----------
+    async embedQuery(query: string): Promise<number[]> {
+        const resp = await axios.post("http://127.0.0.1:5000/embed", {
+            text: query
+        });
+
+        return resp.data.results; // array de floats
+    }
+
+    // ---------- (B) Busca vetorial ----------
+    async searchRelevantChunks(query: string, topicId: number, k = 5) {
+        const vector = await this.embedQuery(query);
+
+        const client = await pool.connect();
+        try {
+            registerType(client);
+
+            const result = await client.query(
+            `
+            SELECT 
+                e.chunk_id,
+                mc.text,
+                mc.index AS chunk_index,
+                (e.embedding <-> $1) AS distance
+            FROM embeddings."MaterialEmbedding" e
+            JOIN embeddings."MaterialChunk" mc 
+                ON mc.id = e.chunk_id
+            JOIN public."Transcript" t
+                ON t.id = mc.transcript_id
+            WHERE t."topicId" = $2
+            ORDER BY e.embedding <-> $1
+            LIMIT $3;
+            `,
+            [toSql(vector), topicId, k]
+        );
+
+            let context = ""
+            result.rows.forEach((row) => {
+                context += row.text
+            })
+            return context;
+
+        } finally {
+            client.release();
+        }
+    }
+
+
     // ---------- (1) Buscar transcrições do tópico ----------
     async getTranscriptsByTopic(topicId: number) {
         return prisma.transcript.findMany({

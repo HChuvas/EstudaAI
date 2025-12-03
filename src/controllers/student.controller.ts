@@ -325,3 +325,13 @@ export const getSubjectTopics = async (req: Request, res: Response, next: NextFu
         next(error)
     }
 }
+
+export const chat = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const message = req.body.message
+        const response = axios.post("http://127.0.0.1:5000/chat", message)
+        res.status(200).json(response)
+    } catch (error) {
+        next(error)
+    }
+}
