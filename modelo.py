@@ -104,25 +104,49 @@ def geracao_resumo_json_mode(user_prompt):
 
     return output.model_dump()
 
-def conversar_com_llm(mensagem:str, context):
+def conversar_com_llm(mensagem:str, contexto, mensagensAnteriores):
 
     prompt_template = """
-    Seu objetivo é responder a perguntas baseadas no contexto oferecido de um material:
+    Seu objetivo é responder a perguntas baseadas no contexto oferecido. Esse contexto é dividido da seguinte maneira:
 
-    CONTEXTO:
+    1) O CONTEXTO DO MATERIAL (principal fonte)
+    2) AS MENSAGENS ANTERIORES (somente as que forem úteis)
+
+    Use essas duas fontes para formular uma resposta precisa, objetiva e fiel ao conteúdo fornecido.
+
+    MENSAGENS ANTERIORES (últimos turnos):
+    {mensagens_anteriores}
+
+    CONTEXTO DO MATERIAL ():
     {context}
 
     PERGUNTA:
     {input}
 
-    IMPORTANTE:
-    Se não houver informação suficiente no contexto que possa satisfazer à pergunta, ofereça, em sua resposta, os tópicos mais próximos, dado o contexto dado que podem se associar com o que o usuário busca. 
+    INSTRUÇÕES IMPORTANTES:
+
+    1) Priorize SEMPRE o conteúdo presente no CONTEXTO DO MATERIAL.  
+    Se a resposta estiver ali, use-a diretamente.
+
+    2) As MENSAGENS ANTERIORES servem apenas para manter continuidade da conversa  
+    (ex: preferências, contexto da dúvida, histórico imediato).  
+    Se alguma delas não tiver relevância para a pergunta atual, ignore.
+
+    3) Caso o material não contenha informação suficiente para responder com exatidão:
+    - NÃO invente informações.
+    - Ao invés disso, ofereça:  
+        a) os pontos do material mais próximos do tema solicitado,  
+        b) possíveis direções para aprofundamento,  
+        c) sugestões de tópicos correlatos presentes no contexto dado.
+
+    4) Evite digressões. Seja direto, completo e claro.
     """
 
     prompt = ChatPromptTemplate.from_template(prompt_template)
     chain = prompt | llm
     response = chain.invoke({
-        "context": context,
+        "mensagens_anteriores":mensagensAnteriores,
+        "context": contexto,
         "input": mensagem
     })
     return response.content
@@ -338,7 +362,8 @@ def chat():
         
         text = data['message']
         context = data['context']
-        response = conversar_com_llm(text, context)
+        former_messages = data['formattedMessages']
+        response = conversar_com_llm(text, context, former_messages)
 
         return jsonify({"resposta": response})
     except Exception as e:
