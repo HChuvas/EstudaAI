@@ -6,7 +6,7 @@ from Coletor import *
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from Estruturas import *
-import json
+import json, os
 
 load_dotenv()
 
