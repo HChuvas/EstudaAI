@@ -1,201 +1,416 @@
 'use client';
-
 import Image from "next/image";
-import { useCallback, useState, useEffect } from 'react';
-import LoadingPage from "../../components/userStatePages/loading";
-import ErrorPage from "../../components/userStatePages/error";
+import { useCallback, useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
+import LoadingPage from "../../components/userStatePages/loading"
+import ErrorPage from "../../components/userStatePages/error"
 
 type topics = {
-    id: number;
-    subject_id: number;
+    id : number;
+    plan_id : number;
     title: string;
-    material_count: number;
-    created_at: string;
-    selecionado?: boolean; 
+    order_index: number;
 }
 
-type MaterialList = {
+type task = {
     id: number;
-    list: topics[];
+    plan_id: number;
+    order_index: number;
+    title : string;
+    description: string;
+    completed: boolean;
 }
 
-interface StudyPlanModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    subjectId: string;
+type complementary = {
+    id: number;
+    plan_id: number;
+    topic_title: string;
+    description: string;
+    order_index: number;
 }
 
-export default function StudyPlanModal({ isOpen, onClose, subjectId }: StudyPlanModalProps) {
-    const [materialList, setMaterialList] = useState<MaterialList>();
+type expanded = {
+    id: number;
+    plan_id : number;
+    topic_title: string;
+    justification : string;
+    order_index: number;
+}
+
+type studyplan = {
+    id: number;
+    userId: number;
+    discipline_id: number;
+    title: string;
+    created_at: string;
+    study_plan_topics: topics[];
+    study_plans_checklist: task[];
+    study_plans_complementary: complementary[];
+    study_plans_expanded: expanded[]
+}
+
+export default function Page() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [studyplan, setStudyplan] = useState<studyplan>();
+    const [editingTask, setEditingTask] = useState<task | null>(null);
+    const [modalTitle, setModalTitle] = useState('');
+    const [modalDescription, setModalDescription] = useState('');
+    const [savingTask, setSavingTask] = useState(false);
+    const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
 
-    useEffect(() => {
-        if (isOpen && subjectId) {
-            const fetchMaterialList = async () => {
-                setLoading(true);
-                try {
-                    const response = await fetch(`http://localhost:8080/students/subjects/topics?subjectId=${subjectId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Erro ao carregar materiais');
-                    }
-                    
-                    const data = await response.json();
-                    
-                    const materialsWithSelection = data.map((material: Omit<topics, 'selecionado'>) => ({
-                        ...material,
-                        selecionado: false 
-                    }));
-                    
-                    setMaterialList({
-                        id: 1,
-                        list: materialsWithSelection
-                    });
-                    
-                } catch (err) {
-                    if (err instanceof Error) {
-                        setError(err.message);
-                    } else {
-                        setError('Erro desconhecido');
-                    }
-                } finally {
-                    setLoading(false);
-                }
-            };
+    const toggleTaskCompletion = useCallback(async (taskId: number) => {        
+        setStudyplan(prev => {
+            if (!prev) return prev; 
             
-            fetchMaterialList();
-        }
-    }, [isOpen, subjectId]);
+            const updatedTasks = prev.study_plans_checklist.map(task =>
+                task.id === taskId 
+                    ? { ...task, completed: !task.completed }
+                    : task
+            );
+            
+            const taskToUpdate = updatedTasks.find(t => t.id === taskId);
+            
+            fetch(`http://localhost:8080/students/studyplan/checklist/mark?itemId=${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                },
+                body: JSON.stringify({ completed: taskToUpdate?.completed })
+            }).catch(err => {
+                console.error('Erro ao atualizar tarefa:', err);
+            });
 
-    const selecionarMaterial = useCallback((materialId: number) => {
-        setMaterialList(prev => {
-            if (!prev) return prev;
-            
             return {
                 ...prev,
-                list: prev.list.map(material =>
-                    material.id === materialId 
-                        ? { ...material, selecionado: !material.selecionado }
-                        : material
-                )
+                study_plans_checklist: updatedTasks
             };
         });
     }, []);
 
-    const handleConfirmar = useCallback(async () => {
-        setLoading(true);
-        if (!materialList) return;
-        
-        const selecionados = materialList.list
-            .filter(material => material.selecionado)
-            .map(material => material.id);
-        
+    const handleEditTask = useCallback((task: task) => {
+        setEditingTask(task);
+        setModalTitle(task.title);
+        setModalDescription(task.description);
+    }, []);
+
+    const handleSaveTask = useCallback(async () => {
+        if (!editingTask || !studyplan) return;
+
+        const updatedTask = {
+            ...editingTask,
+            title: modalTitle,
+            description: modalDescription
+        };
+
+        setSavingTask(true);
+
         try {
-            const response = await fetch('http://localhost:8080/students/llm/transcripts/send', {
-                method: 'POST',
-                body: JSON.stringify(selecionados),
+            const response = await fetch(`http://localhost:8080/students/studyplan/checklist/edit`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem("accessToken")}`
-                }
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                },
+                body: JSON.stringify({
+                    itemId: updatedTask.id,
+                    title: updatedTask.title,
+                    description: updatedTask.description
+                })
             });
-            
+
             if (response.ok) {
-                onClose();
+                setStudyplan(prev => {
+                    if (!prev) return prev;
+                    
+                    return {
+                        ...prev,
+                        study_plans_checklist: prev.study_plans_checklist.map(task =>
+                            task.id === updatedTask.id ? updatedTask : task
+                        )
+                    };
+                });
+                
+                setEditingTask(null);
+                setModalTitle('');
+                setModalDescription('');
             }
         } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('Erro desconhecido');
-            }
+            console.error('Erro ao salvar tarefa:', err);
         } finally {
-            setLoading(false);
+            setSavingTask(false);
         }
-    }, [materialList, onClose]);
+    }, [editingTask, studyplan, modalTitle, modalDescription]);
 
-    if (!isOpen) return null;
+    const handleCancelEdit = useCallback(() => {
+        if (savingTask) return;
+        setEditingTask(null);
+        setModalTitle('');
+        setModalDescription('');
+    }, [savingTask]);
+
+    const params = useParams<{ id: string}>();
+    const id = params.id;
+    
+    useEffect(() => {
+        const fetchStudyplanData = async() => {
+            setLoading(true);
+            
+            try{
+                const response = await fetch(`http://localhost:8080/students/studyplan?id=${id}`, {
+                    method: 'GET',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                    }
+                });
+
+                const data = await response.json();
+                setStudyplan(data)
+
+            } catch (err) {
+                if (err instanceof Error){
+                    setError(err.message);
+                } 
+            } finally {
+                setLoading(false);
+            } 
+        }
+        fetchStudyplanData();
+    }, []);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white w-full max-w-[40%] max-h-[90vh] rounded-2xl overflow-hidden flex flex-col">
-                <div className="bg-[#098842] min-h-16 max-h-16 flex items-center justify-between px-6">
-                    <h1 className="text-white font-medium">Criar Plano de Estudos</h1>
-                    <button 
-                        onClick={onClose}
-                        className="w-5 h-5 cursor-pointer"
-                    >
-                        <Image src="/imagens/X-branco.svg" width={16} height={16} alt="Fechar"/>
-                    </button>
-                </div>
-
-                {loading ? 
-                    (<div className="flex items-center justify-center flex-1"><LoadingPage/></div>) 
-                : error ? 
-                    (<div className="flex items-center justify-center flex-1"><ErrorPage/></div>) 
-                : !materialList || materialList.list.length === 0 ? (
-                    <div className="flex items-center justify-center flex-1 p-6">
-                        <p className="text-[#686464]">Nenhum material disponível</p>
+    <main className="flex flex-col w-screen h-screen overflow-hidden bg-[#F5F5F5]">
+        {editingTask && (
+            <div className="fixed inset-0 flex items-center justify-center z-50">
+                <div 
+                    className="absolute inset-0 bg-black opacity-75"
+                    onClick={handleCancelEdit}
+                    aria-hidden="true"
+                />
+                
+                <div className="relative z-50 flex flex-col w-[90vw] max-w-[500px] bg-[#F5F5F5] rounded-xl overflow-hidden shadow-2xl mx-4">
+                    <div className="flex flex-row justify-between items-center px-6 py-4 bg-[#098842]">
+                        <h1 className="grow text-center font-semibold text-white text-lg">
+                            Editar Tarefa
+                        </h1>
+                        <button 
+                            className="w-6 h-6 cursor-pointer flex items-center justify-center"
+                            onClick={handleCancelEdit}
+                            aria-label="Fechar modal"
+                            disabled={savingTask}
+                        >
+                            <Image src="/imagens/X-branco.svg" width={16} height={16} alt="Fechar"/>
+                        </button>
                     </div>
-                ) : (
-                    <div className="flex flex-col p-6 overflow-hidden">
-                        <h2 className="text-center text-sm text-[#686464] mb-4">
-                            Confirme o material que você deseja incluir no plano de estudos    
-                        </h2>        
+                    
+                    <div className="grow p-6 space-y-4">
+                        <div>
+                            <label className="block font-medium text-[#494949] text-base mb-2">
+                                Título
+                            </label>
+                            <input
+                                type="text"
+                                value={modalTitle}
+                                onChange={(e) => setModalTitle(e.target.value)}
+                                className="opacity-55 text-[#494949] w-full px-3 py-2 rounded-md focus:outline-none border-2 border-[#818181] focus:border-[#494949] hover:border-gray-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                autoFocus
+                                disabled={savingTask}
+                            />
+                        </div>
                         
-                        <div className="flex-1 overflow-auto mb-6">
-                            <div className="bg-[#FFFFFF] rounded-lg drop-shadow p-4">
-                                {materialList.list.map(material => (
-                                    <div 
-                                        key={material.id} 
-                                        className={`flex flex-row items-center mb-3 p-3 rounded-lg transition-colors ${
-                                            material.selecionado ? 'bg-[#E3E3E3]' : 'hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        <button 
-                                            className="m-4 cursor-pointer flex-none"
-                                            onClick={() => selecionarMaterial(material.id)}
-                                        >
-                                            <Image 
-                                                src={material.selecionado ? '/imagens/check_box_marcada.svg' : '/imagens/check_box.svg'} 
-                                                width={18} 
-                                                height={18} 
-                                                alt="checkbox"
-                                            />
-                                        </button>
-                                        
-                                        <div className="flex flex-col justify-center flex-1">
-                                            <h3 className="text-[#686464] font-semibold text-sm">{material.title}</h3>
-                                            <p className="text-[#686464] text-xs">
-                                                {material.material_count} arquivo{material.material_count !== 1 ? 's' : ''} adicionado{material.material_count !== 1 ? 's' : ''}
-                                            </p>
+                        <div>
+                            <label className="block font-medium text-[#494949] text-base mb-2">
+                                Descrição
+                            </label>
+                            <textarea
+                                value={modalDescription}
+                                onChange={(e) => setModalDescription(e.target.value)}
+                                className="opacity-55 text-[#494949] w-full px-3 py-2 rounded-md focus:outline-none border-2 border-[#818181] focus:border-[#494949] hover:border-gray-400 transition-colors duration-200 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                rows={4}
+                                disabled={savingTask}
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="flex flex-row justify-center gap-4 px-6 py-4">
+                        <button 
+                            className="w-32 h-11 cursor-pointer bg-[#098842] rounded-lg hover:bg-[#087735] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            onClick={handleSaveTask}
+                            disabled={savingTask}
+                        >
+                            {savingTask ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                            ) : (
+                                <p className="font-semibold text-white text-sm">
+                                    Salvar
+                                </p>
+                            )}
+                        </button>
+                        
+                        <button 
+                            className="w-32 h-11 cursor-pointer bg-[#D9D9D9] rounded-lg hover:bg-[#c4c4c4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={handleCancelEdit}
+                            disabled={savingTask}
+                        >
+                            <p className="font-semibold text-[#444444] text-sm">
+                                Cancelar
+                            </p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        
+        <div className="flex flex-row justify-between px-6 py-3 w-screen max-h-[7%] bg-[#098842] drop-shadow">
+            <h1 className="flex grow justify-center text-white">{studyplan? studyplan.title : ''}</h1>
+            <button className="w-5 h-5 cursor-pointer">
+                <Image src="/imagens/X-branco.svg" width={16} height={16} alt="Fechar" />
+            </button>
+        </div>
+
+        {loading ? 
+            (<LoadingPage/>) 
+        : error ? 
+            (<ErrorPage/>) 
+        : (
+            <div className="flex flex-row justify-between min-h-[93%] px-8 py-10 gap-8">
+                <div className="flex flex-row w-[75%] min-h-[85%] bg-white rounded-lg drop-shadow">
+                    <div className="px-5 py-5 text-[#494949] w-[97%] overflow-auto
+                        [&::-webkit-scrollbar]:hidden
+                        [-ms-overflow-style:none]
+                        [scrollbar-width:none]">
+                        
+                        {studyplan && (
+                            <div className="space-y-8">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-[#098842] mb-4">
+                                        1. Roteiro de Estudos (Tópicos Principais)
+                                    </h2>
+                                            
+                                    <ul className="space-y-3">
+                                        {studyplan.study_plan_topics
+                                            .sort((a, b) => a.order_index - b.order_index)
+                                            .map((topic, index) => (
+                                                <li key={topic.id} className="flex items-start">
+                                                    <span className="text-[#098842] font-bold mr-3 mt-1">
+                                                        {index + 1}.
+                                                    </span>
+                                                        
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold text-[#494949]">
+                                                            {topic.title}
+                                                        </h3>
+                                                    </div>
+                                                </li>
+                                            ))
+                                        }
+                                    </ul>
+                                </div>
+
+                                {studyplan.study_plans_expanded && studyplan.study_plans_expanded.length > 0 && (
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-[#098842] mb-4">
+                                            2. Roteiro Expandido e Justificativa
+                                        </h2>
+                                            
+                                        <div className="space-y-4">
+                                            {studyplan.study_plans_expanded
+                                                .sort((a, b) => a.order_index - b.order_index)
+                                                .map((expanded) => (
+                                                    <div key={expanded.id} className="border-l-4 border-[#098842] pl-4 py-2">
+                                                        <h3 className="text-lg font-semibold text-[#494949] mb-2">
+                                                            {expanded.topic_title}
+                                                        </h3>
+                                                                        
+                                                        <div className="bg-gray-50 p-4 rounded-md">
+                                                            <p className="text-sm text-gray-700">
+                                                                <span className="font-semibold text-[#098842]">Justificativa:</span> {expanded.justification}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            }
                                         </div>
                                     </div>
-                                ))}
+                                    )}
+
+                                {studyplan.study_plans_complementary && studyplan.study_plans_complementary.length > 0 && (
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-[#098842] mb-4">
+                                            3. Conteúdos Complementares
+                                        </h2>
+                                            
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {studyplan.study_plans_complementary
+                                                .sort((a, b) => a.order_index - b.order_index)
+                                            .map((complementary) => (
+                                                        
+                                                    <div key={complementary.id} className="bg-gray-50 p-4 rounded-lg">
+                                                        <h3 className="text-lg font-semibold text-[#494949] mb-2">
+                                                            {complementary.topic_title}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-700">
+                                                            {complementary.description}
+                                                        </p>
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    </div>
+                                    )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="w-[25%] min-h-[85%] bg-white rounded-lg drop-shadow gap-2 overflow-auto">
+                    <div className="flex justify-center p-1 m-0.5 font-semibold text-[#686464] items-center gap-2">
+                        <button className="w-5 h-5 cursor-pointer">
+                            <Image src="/imagens/add-cinza.svg" width={16} height={16} alt="adicionar" />
+                        </button>
+                        <h2>Adicionar Item</h2>
+                    </div>
+
+                    {(studyplan?.study_plans_checklist || []).map(task => (
+                        <div 
+                            key={task.id} 
+                            className={`flex flex-row ${task.completed ? 'bg-[#E3E3E3] line-through decoration-[#686464]' : ''} ${hoveredTaskId === task.id && !task.completed ? 'bg-gray-50' : ''}`}
+                            onMouseEnter={() => setHoveredTaskId(task.id)}
+                            onMouseLeave={() => setHoveredTaskId(null)}
+                        >
+                            <button 
+                                className="m-4 cursor-pointer flex-none"
+                                onClick={() => toggleTaskCompletion(task.id)}
+                            >
+                                <Image 
+                                    src={task.completed ? '/imagens/check_box_marcada.svg' : '/imagens/check_box.svg'} 
+                                    width={18} 
+                                    height={18} 
+                                    alt="checkbox"
+                                />
+                            </button>
+                            
+                            <div className="flex flex-col max-h-[65%] justify-center m-1.5 flex-1">
+                                <h3 className="text-[#686464] font-semibold text-sm">{task.title}</h3>
+                                <p className="text-[#686464] text-xs">{task.description}</p>
+                            </div>
+
+                            <div className="flex flex-col m-3 justify-center gap-1.5">
+                                <button 
+                                    className="w-5 h-5 cursor-pointer"
+                                    onClick={() => handleEditTask(task)}
+                                    disabled={task.completed}
+                                >
+                                    <Image src="/imagens/editar-cinza.svg" width={16} height={16} alt="Editar" />
+                                </button>
                             </div>
                         </div>
-
-                        <div className="flex justify-center">
-                            <button 
-                                onClick={handleConfirmar}
-                                className="w-51 h-10 cursor-pointer bg-[#098842] rounded-lg hover:bg-[#087735] transition-colors flex items-center justify-center"
-                            >
-                                <p className="font-semibold text-white text-base">
-                                    Confirmar
-                                </p>
-                            </button>
-                        </div>
-                    </div>
-                )}
+                    ))}
+                </div>
             </div>
-        </div>
+        )}
+    </main>
     );
 }
-
