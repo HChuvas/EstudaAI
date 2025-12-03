@@ -75,7 +75,7 @@ export default function ModalConfirmacao({
         </div>
 
 
-        <div className="flex flex-row justify-center gap-4 px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div className="flex flex-row justify-center gap-4 px-6 py-4">
           <button 
             className="w-32 h-11 cursor-pointer bg-[#FF6262] rounded-lg hover:bg-[#e55555] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             onClick={onConfirmar}
