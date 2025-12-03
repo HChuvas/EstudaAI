@@ -2,14 +2,24 @@
 
 import { Navbar } from "@/app/components/navbar";
 import Image from "next/image";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Topic = {
   id: string;
   title: string;
-  filesCount: number;
+  material_count: number;
+  subject_id: number;
+  created_at: Date;
 };
+
+type StudyPlan = {
+  id: number,
+  userId: number,
+  discipline_id: number,
+  title: string,
+  created_at: Date
+}
 
 export default function TopicosPage() {
   const pathname = usePathname() || "";
@@ -28,41 +38,119 @@ export default function TopicosPage() {
   //     .join(" ");
   // }, [disciplineSlug]);
 
-  const { id } = useParams();
+  const { disciplina } = useParams();
   const search = useSearchParams();
   const disciplineName = search.get("nomeDisciplina");
 
-  const [topics, setTopics] = useState<Topic[]>([
-    { id: "t1", title: "Ponteiros em C", filesCount: 2 },
-    { id: "t2", title: "Notação Assintótica", filesCount: 2 }
-  ]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [plans, setStudyPlans] = useState<StudyPlan[]>([]);
 
+  const [createdTopicId, setCreatedTopicId] = useState("")
   const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
   const [newTopicTitle, setNewTopicTitle] = useState("");
 
-  const [isPlanUploadOpen, setIsPlanUploadOpen] = useState(false);
+  const [isFileUploadOpen, setisFileUploadOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  function handleAddTopic() {
-    if (!newTopicTitle.trim()) return;
-    const newT: Topic = {
-      id: String(Date.now()),
-      title: newTopicTitle.trim(),
-      filesCount: 0,
-    };
 
-    setTopics((s) => [newT, ...s]);
-    setNewTopicTitle("");
-    setIsAddTopicOpen(false);
+  useEffect(() => {
+    async function fetchTopics() {
+      try {
+      const response = await fetch(`http://localhost:8080/students/subjects/topics?subjectId=${disciplina}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+
+      const data = await response.json();
+      setTopics(data)      
+      } catch (error) {
+        console.error("Erro ao criar disciplina:", error);
+      }  
+      }
+
+      async function fetchStudyPlans() {
+        try {
+          const response = await fetch(`http://localhost:8080/students/studyplans?subjectId=${disciplina}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+
+        const data = await response.json();
+        const plans = data.map((p: any) => ({
+          ...p,
+          created_at: new Date(p.created_at),
+        }));
+
+        setStudyPlans(plans)
+        } catch (error) {
+          console.error("Erro ao pegar planos de estudos:", error)
+        }
+      }
+    fetchStudyPlans()
+    fetchTopics()
+  }, [disciplina])
+
+  async function handleAddTopic() {
+    try {
+      if (!newTopicTitle.trim()) return;
+      const response = await fetch("http://localhost:8080/students/topics/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        },
+        body: JSON.stringify({
+          "subjectId": disciplina,
+          "title": newTopicTitle
+        })
+      })
+      if (!response.ok) {
+        console.error("Erro ao criar tópico:", await response.text());
+        return;
+      }
+
+      const data = await response.json()
+    
+      setCreatedTopicId(data.id)
+      setNewTopicTitle("");
+      setIsAddTopicOpen(false)
+      setisFileUploadOpen(true)
+    } catch (error) {
+      console.error("Erro ao criar tópico:", error)
+    }
   }
 
-  function handleDeleteTopic(id: string) {
-    setTopics((s) => s.filter((t) => t.id !== id));
+  async function handleDeleteTopic(id: string) {
+    try {
+      const response = await fetch(`http://localhost:8080/students/topics/delete?id=${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Erro ao criar tópico:", await response.text());
+        return;
+      }
+
+      setTopics(prev => prev.filter(t => t.id !== id));
+
+    } catch (error) {
+      console.log("Erro ao deletar tópico:", error)
+    }
   }
 
   function openTopic(topicId: string) {
-    router.push(`/grupos/${disciplineSlug}/topico/${topicId}`);
+    router.push(`/students/subjects/topic/${topicId}`)
   }
 
   const handleFilesAdd = useCallback((files: FileList | null) => {
@@ -97,17 +185,20 @@ export default function TopicosPage() {
     setSelectedFiles((s) => s.filter((_, i) => i !== index));
   }
 
-  async function handleSendPlanFiles() {
+  async function handleSendTopicFiles() {
     if (selectedFiles.length === 0) return;
     setIsUploading(true);
 
     const form = new FormData();
-    form.append("planId", "plano-ed");
+    form.append("topicId", createdTopicId);
     selectedFiles.forEach((f) => form.append("files", f));
 
     try {
-      const res = await fetch("/api/upload", {
+      const res = await fetch("http://localhost:8080/students/materials/upload", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        },
         body: form,
       });
 
@@ -115,12 +206,13 @@ export default function TopicosPage() {
         console.error("Upload falhou");
       } else {
         setSelectedFiles([]);
-        setIsPlanUploadOpen(false);
+        setisFileUploadOpen(false);
       }
     } catch (err) {
       console.error("Erro no upload:", err);
     } finally {
       setIsUploading(false);
+      router.push(`/students/subjects/topic/${createdTopicId}`)
     }
   }
 
@@ -167,7 +259,7 @@ export default function TopicosPage() {
                 </div>
 
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm text-[#686464]">Arquivos adicionados: {t.filesCount}</p>
+                  <p className="text-sm text-[#686464]">Arquivos adicionados: {t.material_count}</p>
 
                   <button
                     onClick={(e) => {
@@ -190,7 +282,7 @@ export default function TopicosPage() {
           <div className="flex flex-wrap gap-6">
             <div
               className={`${cardClass} flex items-center justify-center`}
-              onClick={() => setIsPlanUploadOpen(true)}
+              onClick={() => setisFileUploadOpen(true)}
             >
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2">
@@ -200,25 +292,29 @@ export default function TopicosPage() {
               </div>
             </div>
 
-            <div
-              className={`${cardClass} bg-white flex flex-col justify-between`}
-              onClick={() => {
-                router.push(`/grupos/${disciplineSlug}/plano/ed`);
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") router.push(`/grupos/${disciplineSlug}/plano/ed`);
-              }}
-            >
-              <div>
-                <h3 className="font-medium text-lg text-[#3b3b3b]">Plano de Estudos ED</h3>
-              </div>
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`${cardClass} bg-white flex flex-col justify-between`}
+                onClick={() => {
+                  router.push(`/students/studyplan/${plan.id}`); //não foi colocado id na pasta studyplan ainda
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <div>
+                  <h3 className="font-medium text-lg text-[#3b3b3b]">
+                    {plan.title}
+                  </h3>
+                </div>
 
-              <div className="mt-2">
-                <p className="text-sm text-[#686464]">Arquivos adicionados: 2</p>
+                <div className="mt-2">
+                  <p className="text-sm text-[#686464]">
+                    Adicionado em: {`${plan.created_at.getDay()}/${plan.created_at.getMonth() + 1}/${plan.created_at.getFullYear()}`}
+                  </p>
+                </div>
               </div>
-            </div>
+            ))}
 
           </div>
         </div>
@@ -255,13 +351,13 @@ export default function TopicosPage() {
       )}
 
       {/* Modal de upar arquivo */}
-      {isPlanUploadOpen && (
+      {isFileUploadOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 pb-12 bg-black/40">
           <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden">
             <div className="bg-[#098842] h-16 flex justify-end items-center px-6">
               <button
                 onClick={() => {
-                  setIsPlanUploadOpen(false);
+                  setisFileUploadOpen(false);
                   setSelectedFiles([]);
                 }}
                 aria-label="Fechar"
@@ -384,7 +480,7 @@ export default function TopicosPage() {
 
                     <button
                       className="px-6 py-3 bg-[#098842] text-white rounded disabled:opacity-60"
-                      onClick={handleSendPlanFiles}
+                      onClick={handleSendTopicFiles}
                       disabled={isUploading || selectedFiles.length === 0}
                     >
                       {isUploading ? "Enviando..." : "Enviar"}
