@@ -437,6 +437,12 @@ class StudentService {
             }
         })
     }
+
+    async deleteChecklistItem(itemId: number) {
+        return await prisma.studyPlanChecklistItem.delete({
+            where: { id: itemId }
+        })
+    }
 }
 
 export const studentService = new StudentService()

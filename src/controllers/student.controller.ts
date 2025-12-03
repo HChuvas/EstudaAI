@@ -357,3 +357,13 @@ export const addChecklistItem = async (req: Request, res: Response, next: NextFu
         next(error)
     }
 }
+
+export const deleteChecklistItem = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const itemId = Number(req.query.itemId)
+        const deletedItem = await studentService.deleteChecklistItem(itemId)
+        res.status(200).json(deletedItem)
+    } catch (error) {
+        next(error)
+    }
+}
