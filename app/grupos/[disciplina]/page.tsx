@@ -4,7 +4,8 @@ import { Navbar } from "@/app/components/navbar";
 import Image from "next/image";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import StudyPlanModal from './StudyPlanModal'
+import CreateStudyPlanModal from './CreateStudyPlanModal';
+import StudyPlanModal from './StudyPlanModal';
 
 type Topic = {
   id: string;
@@ -55,6 +56,8 @@ export default function TopicosPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const [isStudyPlanModalOpen, setIsStudyPlanModalOpen] = useState(false);
+  const [isViewPlanModalOpen, setIsViewPlanModalOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchTopics() {
@@ -218,6 +221,11 @@ export default function TopicosPage() {
     }
   }
 
+  const handleViewPlan = useCallback((planId: number) => {
+    setSelectedPlanId(planId);
+    setIsViewPlanModalOpen(true);
+  }, []);
+
   const cardClass = "rounded-xl border border-[#098842] p-4 shadow-sm cursor-pointer hover:shadow-md h-28 w-80";
 
   return (
@@ -297,9 +305,7 @@ export default function TopicosPage() {
               <div
                 key={plan.id}
                 className={`${cardClass} bg-white flex flex-col justify-between`}
-                onClick={() => {
-                  router.push(`/students/studyplan/${plan.id}`);
-                }}
+                onClick={() => handleViewPlan(plan.id)}
                 role="button"
                 tabIndex={0}
               >
@@ -492,11 +498,22 @@ export default function TopicosPage() {
         </div>
       )}
 
-      <StudyPlanModal 
+      <CreateStudyPlanModal 
         isOpen={isStudyPlanModalOpen}
         onClose={() => setIsStudyPlanModalOpen(false)}
         subjectId={disciplina as string}
       />
+
+      {selectedPlanId && (
+        <StudyPlanModal 
+          isOpen={isViewPlanModalOpen}
+          onClose={() => {
+            setIsViewPlanModalOpen(false);
+            setSelectedPlanId(null);
+          }}
+          planId={selectedPlanId}
+        />
+      )}
     </div>
   );
 }

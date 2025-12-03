@@ -25,7 +25,7 @@ interface StudyPlanModalProps {
     subjectId: string;
 }
 
-export default function StudyPlanModal({ isOpen, onClose, subjectId }: StudyPlanModalProps) {
+export default function CreateStudyPlanModal({ isOpen, onClose, subjectId }: StudyPlanModalProps) {
     const [materialList, setMaterialList] = useState<MaterialList>();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
