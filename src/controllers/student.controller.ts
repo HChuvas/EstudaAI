@@ -345,3 +345,15 @@ export const loadMessages = async (req: Request, res: Response, next: NextFuncti
         next(error)
     }
 }
+
+export const addChecklistItem = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const planId = Number(req.body.planId)
+        const description = req.body.description
+        const title = req.body.title
+        const newItem = await studentService.addChecklistItem(planId, title, description)
+        res.status(200).json(newItem)
+    } catch (error) {
+        next(error)
+    }
+}

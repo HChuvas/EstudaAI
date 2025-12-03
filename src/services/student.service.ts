@@ -418,6 +418,25 @@ class StudentService {
             }
         })
     }
+
+    async addChecklistItem(planId: number, title: string, description: string) {
+        const items = await prisma.studyPlanChecklistItem.findMany({
+            where: { plan_id: planId }
+        })
+
+        items.sort((a, b) => b.order_index - a.order_index)
+
+        const newIndex = Number(items[0]?.order_index) + 1
+
+        return await prisma.studyPlanChecklistItem.create({
+            data: {
+                title,
+                description,
+                plan_id: planId,
+                order_index: newIndex
+            }
+        })
+    }
 }
 
 export const studentService = new StudentService()
