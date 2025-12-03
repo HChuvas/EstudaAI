@@ -3,6 +3,7 @@ import { supabase } from "../config/supabase.js";
 import { prisma } from "../database/index.js";
 import type { Role } from "../types/roles.js";
 import jwt from "jsonwebtoken"
+import type { Message } from "../../generated/prisma/index.js";
 
 class StudentService {
     sanitizeFileName(filename: string): string {
@@ -402,10 +403,14 @@ class StudentService {
         })
     }
 
-    async loadMessages(topicId: number) {
-        return await prisma.message.findMany({
+    async loadMessages(topicId: number): Promise<Message[]> {
+        const messages = await prisma.message.findMany({
             where: { topic_id: topicId }
         })
+
+        messages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+        return messages
     }
 
     async saveMessage(message: string, userId: number | null , topicId: number) {
