@@ -119,7 +119,6 @@ class StudentService {
 
 
     async uploadMaterialsService(userId: number, topicId: number, files: Express.Multer.File[]) {
-        const fileCount = files.length
         const uploads = files.map(async (file) => {
             const sanitizedName = this.sanitizeFileName(file.originalname)
             const path = `materials/${userId}/${topicId}/${Date.now()}-${sanitizedName}`
@@ -134,7 +133,7 @@ class StudentService {
             else {
                 await prisma.topic.update({
                     where: { id: topicId },
-                    data: { material_count: { increment: fileCount } }
+                    data: { material_count: { increment: 1 } }
                 })
             }
 
