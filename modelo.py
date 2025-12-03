@@ -1,15 +1,12 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.documents import Document
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_community.vectorstores.pgvector import PGVector
 from Coletor import *
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request
 from Estruturas import *
-import json, re, requests, tempfile
-from supabase import create_client, Client
-from zipfile import ZipFile
+import json
 
 load_dotenv()
 
@@ -19,97 +16,12 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv(
 
 llm_json = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("API_KEY"), response_mime_type="application/json")
 
-#supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
-
 vector_store = PGVector(
     connection_string=os.getenv("DATABASE_URL"),
     embedding_function=embedding_model,
     collection_name="material_embedding"
 )
 
-
-#depreciado. código mantido para caso seja requerido futuramente.
-def parse_llm_json(response_text):
-    cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", response_text.strip())
-    cleaned = re.sub(r"```$", "", cleaned.strip())
-    return json.loads(cleaned)
-
-#depreciado. sucinto a deleção futuramente
-def geracao_resumo(user_prompt):
-    system_prompt = """
-                    Seu trabalho é trazer um resumo baseado nos conteúdos compartilhados contigo.
-                    O conteúdo do resumo deve ser composto de:
-
-                        - palavras-chaves do conteúdo;
-                        - principais tópicos abordados, explicados com riqueza de detalhes;
-
-                    Gere o resumo no formato JSON seguindo o seguinte template: 
-
-                        {{
-                            "resumo": {{
-                                "titulo": "titulo do resumo",
-                                "conteudo": "todo o conteúdo do resumo"
-                            }},
-                            "lembretes": {{
-                                "lembrete1": {{
-                                "titulo": "titulo do lembrete",
-                                "descricao": "descricao do lembrete",
-                                "data": "data importante mencionada no material ou aula"
-                                }},
-                                "lembrete2": {{
-                                "titulo": "titulo do lembrete",
-                                "descricao": "descricao do lembrete",
-                                "data": "data importante mencionada no material ou aula (campo opcional)"
-                                }}
-                                .
-                                .
-                                .
-                            }}
-                        }}
-
-                    OBS:
-                    Gere SOMENTE o json, e nada mais.
-                    Não gere NENHUM MARKDOWN, somente como ***STRING PADRÃO***
-                    Lembretes consistem de anúncios feitos dentro do conteúdo marcando datas. 
-                    No caso de não haver anúncio EXPLÍCITO da data deixe o campo DATA VAZIO ("").
-                    Caso haja anúncio de DIA, MÊS E/OU ANO, retorne a data no formato YYYY-MM-DDTHH:mm:ss.sssZ (FORMATO ISO) DENTRO do campo de DATA. 
-                    Caso o horário não seja especificado, PREENCHA O HORÁRIO COM O HORÁRIO PADRÃO (00:00:00.000)
-                    Se o ano não for explícito, use o ano atual (2025).
-                    Para categorizar um lembrete, busque por mensagens que evoquem eventos no futuro próximo como:
-                    
-                    Exemplos de datas válidas:
-
-                        - '[25/12] (data válida.): [será feriado] (descrição), então não haverá aula.'
-                        - '[16 de Novembro / 16/11] (data válida.) [eu irei para um congresso e ficarei fora até dia 26] (descrição. Segunda data é opcional.)'
-                        - '[14 de Maio de 2026 / 14/05] (data válida.), celebrarei 50 anos de casamento, por isso [não haverá aula] (descrição)'
-                    
-                    **IMPORTANTE:**
-                    Caso o conteúdo enviado esteja em formato de lista, cronograma, calendário, tabela de eventos, agenda de aulas ou sequência de datas, 
-                    cada linha contendo uma ou mais datas deve ser interpretada como um lembrete separado.
-
-                    - Se houver duas datas na mesma linha (ex: “11/11 e 13/11”), gere dois lembretes idênticos, variando apenas a data.  
-                    - O título do lembrete deve ser o texto imediatamente após a data (ex: “Aula de Arquitetura”, “Entrega do Projeto”, “Apresentação Final” etc.).  
-                    - A descrição pode ser gerada com base no contexto geral do material (ex: “Atividade de entrega”, “Aula de revisão”, “Apresentação de resultados”).  
-                    - Sempre que uma linha contiver uma data, gere um lembrete, mesmo que não haja verbo ou contexto narrativo.  
-                    - Interprete expressões como “Calendário”, “Cronograma”, “Agenda”, “Planejamento” como indícios de que o texto é uma lista de eventos com datas.
-
-                    Na área de lembretes, caso não haja nenhum lembrete relevante dento do conteúdo analisado, mantenha o campo lembrete como um campo vazio. Ex: "lembretes": {{}}. 
-                    Essa área de lembretes é estritamente para anúncios feitos em aula ou no material e não tem haver diretamente com o conteúdo do resumo.
-
-                    O tópico desse material é '{input}'.
-                    """
-
-    prompt = ChatPromptTemplate.from_template(system_prompt)
-
-    chain = prompt | llm
-
-    output = chain.invoke({
-        "input": user_prompt
-    })
-
-    return output.content
-
-#versão atualizada do código acima. mantido por questões de garantia.
 def geracao_resumo_json_mode(user_prompt):
     template_resumo =   """
                         Your task is to produce a summary based on the content shared with you.
@@ -192,10 +104,7 @@ def geracao_resumo_json_mode(user_prompt):
 
     return output.model_dump()
 
-def conversar_com_llm(mensagem:str):
-    # Receber entrada
-    # Gerar embeddings que satisfaçam a pergunta
-    # Enviar para a llm com contexto
+def conversar_com_llm(mensagem:str, context):
 
     prompt_template = """
     Seu objetivo é responder a perguntas baseadas no contexto oferecido de um material:
@@ -209,11 +118,6 @@ def conversar_com_llm(mensagem:str):
     IMPORTANTE:
     Se não houver informação suficiente no contexto, diga: 'Não encontrei essa informação no material.'
     """
-
-    emb = embedding_model.embed_query(mensagem)
-
-    docs = vector_store.similarity_search_by_vector(emb, k=8)
-    context = "\n\n".join(doc.page_content for doc in docs)
 
     prompt = ChatPromptTemplate.from_template(prompt_template)
     chain = prompt | llm
@@ -369,158 +273,6 @@ def gerar_plano_de_estudo(user_prompt):
 
     return output.model_dump()
 
-def gerar_plano_de_estudo_rag():
-    template_plano_de_estudo =  """
-                                Seu trabalho é trazer um plano de estudos, no estilo de um roadmap, para orientar um aluno em quais conteúdos priorizar, dado uma série de
-                                materiais e assuntos.
-                                O conteúdo esperado do plano de estudos consiste de:
-
-                                - Uma lista simplificada do fluxo geral dos conteúdos, organizada em tópicos baseados em prioridade. Essa prioridade consiste em definir
-                                o quão crucial aquele conteúdo é para que se possa compreender os assuntos seguintes. A lista deve conter todos os assuntos relevantes. Ex:
-                                        1. Introdução a Ponteiros;
-                                        2. Aritmética de Ponteiros;
-                                        3. Ponteiros Aplicados em Estrutura de Dados;
-                                        4. ...
-                                    - Uma lista expandida, estruturada com a ordem dos tópicos, explicando o motivo para aquele conteúdo ter sido escolhido naquela ordem.
-                                        OBS1: A explicação DEVE ser composta de 2 a 3 sentenças curtas.
-                                        OBS2: NÃO mostre o contador de caracteres em nenhum ponto da conversa. É necessário apenas o conteúdo. 
-                                        OBS3: A intenção desse limite é apenas para que sirva como uma breve justificativa e orientação para o que deve ser visto e por que.
-
-                                    - Ao final da lista, baseado no que já foi explicado, gere uma segunda lista com conteúdos não explicitamente mencionados que podem ser
-                                    relevantes para melhorar a compreensão do resumo. Ex:
-                                        (mantendo o contexto de aula de ponteiros)
-                                        a) Conceitos básicos de C;
-                                        b) Estruturas de dados básicas (vetores e construtores);
-                                        c) ...
-                                        OBS: Os assuntos devem ser relevantes para o conteúdo e não puxar de conhecimentos que estão muito além do escopo estudado.
-                                    REGRAS OBRIGATÓRIAS DE FORMATAÇÃO (SIGA SEMPRE):
-
-                                    1. REGRAS PARA GERAÇÃO DOS SUMÁRIOS:
-                                    - "title" e "topicTitle": uma sentença curta que sumarize exatamente o que deve ser feito.
-                                    - "description" (exceto checklist) deve ser composto de até 2 sentenças curtas e explicando a importância daquele tópico para o aprendizado.
-                                    - "justification": de duas sentenças curtas, explicando o motivo da escolha daquele método para o tópico na primeira sentaça e abrindo um gancho 
-                                    sobre a relação dessa com o próximo tópico com a segunda sentença.
-                                    - checklist "description": composto de no máximo uma sentenças curtas, explicando o que o tópico da checklist espera.
-
-                                    2. NÃO adicione explicações fora do JSON.
-
-                                    3. REGRAS DOS TÓPICOS:
-                                    - Evite enaltecer a importância do tópico de maneira expositiva dentro da justificativa. Ex. do que NÃO deve ser feito: "Este tópico é 
-                                    fundamental para compreender o conceito de ponteiros e seus operadores básicos", "Este tópico demonstra a forte relação entre ponteiros 
-                                    e arrays em C", "Compreender como ponteiros são usados na passagem de parâmetros para funções é essencial", etc.
-                                    - A justificativa deve EXPLICITAR o 'porquê' de aquele tópico ser relevante, então opte por frases que denotem correlação. Ex: "Poteiros são essenciais para aprender
-                                    como a linguagem C gerencia memória.", "Entender a relação entre Ponteiros e Arrays solidifica a base para compreensão de Estruturas de Dados mais complexas.", etc.
-
-                                    3. REGRAS DA CHECKLIST:
-                                    - Cada tópico deve ser composto de atividades concretas que permitam o enriquecimento do aprendizado do aluno.
-                                    - EVITE pedir por atividades vagas ou sugestões educadas como "Estudar 'assunto X'", "Saber aplicar tais conhecimentos", isso são meios
-                                    para que o aluno atinja os objetivos da checklist, e, portanto, não devem ser considerados como objetivos em si.
-                                    - Novamente os checklists DEVEM ser relacionados com todo o conhecimento absorsvido dos materiais recebidos: 
-                                        a) Se hoverem livros sobre o assunto como recomendações, recomende a leitura dos capítulos relacionados.
-                                        b) Se for mencionado uma lista de exercícios, ou souber que dito material possui exercícios, priorize em recomendar os exercícios desse material
-                                    - Exemplos do que se espera na geração da checklist:
-
-                                        "checklist": 
-                                            "item1": 
-                                                "title": "Leitura Obrigatória",
-                                                "orderIndex": 1,
-                                                "description": "Ler Capítulo 3 do livro 'Introdução a Algoritmos (Cormen)'"
-
-                                            "item2": 
-                                                "title": "Fichamento",
-                                                "orderIndex": 2,
-                                                "description": "Definir 'Análise de Algoritmos' e 'Complexidade'"
-
-                                            "item3": 
-                                                "title": "Videoaula Introdutória",
-                                                "orderIndex": 3,
-                                                "description": "Assistir à videoaula 'Complexidade de Algoritmos - Conceitos Iniciais'"
-
-                                            "item4": 
-                                                "title": "Praticar",
-                                                "orderIndex": 4,
-                                                "description": "Identificar a notação O de 5 loops simples"
-
-
-                                    Gere o plano de estudos seguindo o formato JSON especificado:
-
-                                        {{
-                                            "title": {{
-                                                "title": "Titulo do plano de estudos"
-                                            }},
-                                            "topics": {{
-                                                "topic1": {{
-                                                    "title": "Nome do primeiro tópico prioritário",
-                                                    "orderIndex": 1
-                                                }},
-                                                "topic2": {{
-                                                    "title": "Nome do segundo tópico prioritário",
-                                                    "orderIndex": 2
-                                                }}
-                                                ...
-                                            }},
-                                            "expandedTopics": {{
-                                                "topic1": {{
-                                                    "topicTitle": "Nome do primeiro tópico",
-                                                    "orderIndex": 1,
-                                                    "justification": "Explicação do porquê esse tópico vem nessa ordem"
-                                                }},
-                                                "topic2": {{
-                                                    "topicTitle": "Nome do segundo tópico",
-                                                    "orderIndex": 2,
-                                                    "justification": "Explicação do porquê esse tópico vem nessa ordem"
-                                                }}
-                                                ...
-                                            }},
-                                            "complementaryTopics": {{
-                                                "complemento1": {{
-                                                    "title": "Conteúdo complementar relevante",
-                                                    "description": "Descrição resumida da importância desse conteúdo adicional",
-                                                    "orderIndex": 1
-                                                }},
-                                                "complemento2": {{
-                                                    "title": "Outro conteúdo complementar",
-                                                    "description": "Descrição resumida",
-                                                    "orderIndex": 2
-                                                }}
-                                                ...
-                                            }},
-                                            "checklist": {{
-                                                "item1": {{
-                                                    "title": "Título do item da checklist",
-                                                    "orderIndex": 1,
-                                                    "description": "Descrição do que deve ser verificado / estudado"
-                                                }},
-                                                "item2": {{
-                                                    "title": "Outro item da checklist",
-                                                    "orderIndex": 2,
-                                                    "description": "Descrição resumida do item"
-                                                }}
-                                                ...
-                                            }}
-                                        }}
-
-                                    Os assuntos do plano de estudos são os seguintes {input}
-                                    """
-    
-    query = "conteúdos principais para um plano de estudos"
-
-    parser_plano_de_estudos = PydanticOutputParser(pydantic_object=SaidaPlanoDeEstudos)
-
-    prompt = ChatPromptTemplate.from_template(template_plano_de_estudo)
-
-    chain = prompt | llm_json | parser_plano_de_estudos
-    emb = embedding_model.embed_query(query)
-    docs = vector_store.similarity_search_by_vector(emb, k=15)
-    context = "\n\n".join(doc.page_content for doc in docs)
-
-    output = chain.invoke({
-        "input": context
-    })
-
-    return output.model_dump()
-
-#Lembrete precisamos PROCESSAR OS DADOS EM  (pdf2md_extractor ou mp2text_extractor) para evitar erros na leitura
 @app.route("/generate", methods=["POST"])
 def generate_summary():
     
@@ -551,17 +303,13 @@ def generate_study_plan():
     
     try:
         data = request.get_json()
+        print(data)
 
         user_prompt = ""
 
         for topic_transcriptions in data:
             for transcript in topic_transcriptions:
                 user_prompt += transcript.get("content")
-        #print(user_prompt)
-
-        # Alterar a lógica para 
-        # a) fazer a busca dos k embeddings mais relevantes para o plano de estudo
-        # b) inserir esses embeddings ao invés do conteúdo em texto
 
         if user_prompt == "":
             return jsonify({"error": "Input vazio"}), 400
@@ -585,69 +333,17 @@ def chat():
     try:
         data = request.get_json()
 
-        if not data or 'message' not in data:
+        if not data or 'message' or 'context' not in data:
             return jsonify({"erro": "Envie uma mensagem. Campo 'mensagem' obrigatório."}), 400
         
         text = data['message']
-        response = conversar_com_llm(text)
+        context = data['context']
+        response = conversar_com_llm(text, context)
 
         return jsonify({"resposta": response})
     except Exception as e:
         print(e)
         return jsonify({"error": e}), 500
-
-"""@app.route("/download", methods=["POST"])
-def download():
-    
-    data = request.json
-    buffer = BytesIO()
-    results = []
-
-    with ZipFile(buffer, "w") as zipf:
-        for obj in data:
-            path = obj.get("file_path")
-            material_id = obj.get("id")
-            if not path:
-                return jsonify({"error": "File path unknown"}), 400
-            
-            resp = requests.get(path, stream=True)
-
-            if resp.status_code != 200:
-                return jsonify({"error": "Failed to fetch file"}), 500
-
-            conteudo = resp.content
-            mem_file = BytesIO(conteudo)
-            mem_file.seek(0)
-            filename = path.split("/")[-1]
-            #zipf.writestr(filename,resp.content)
-            ext = filename.split(".")[-1].lower() if "." in filename else ""
-
-            AUDIO_EXTS = {"mp3", "wav", "m4a", "flac", "aac", "ogg"}
-            DOC_EXTS = {"pdf", "docx", "pptx"}
-
-            try:
-                if ext in AUDIO_EXTS:
-                    #transcricao = mp2txt_extractor(mem_file)
-                    continue
-                elif ext in DOC_EXTS:
-                    transcricao = pdf2md_extractormod(mem_file ,filename)
-                else:
-                    transcricao = None
-
-            except Exception as e:
-                results.append({
-                    "filename": filename,
-                    "transcription": "" 
-                })
-                continue
-
-            results.append({
-                "material_id": material_id,
-                "filename": filename,
-                "transcription": transcricao 
-            })
-
-    return jsonify({"results": results}), 200"""
 
 @app.route("/transcript", methods=["POST"])
 def transcript_test():
@@ -698,12 +394,6 @@ def embed_chunk():
         return jsonify({"error": f"Erro ao gerar embedding: {str(e)}"}), 500
 
     return jsonify({"results": embedding}), 200
-
-    
-# a ser feito: 
-# 1. rota para receber arquivo do back. baixar e retornar transcrição
-# 2. rota para chamar o modelo de embedding e transferir o conteudo da transcrição como embedding para o pg vector
-# 3. verificar persistência da conversa dentro de um tópico
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

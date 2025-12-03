@@ -9,7 +9,6 @@
 #
 # Precisamos de Chunking dos dados para: arquivos muito longos ou muitos arquivos
 import os, whisper, transformers, ffmpeg
-from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter, PdfFormatOption
@@ -47,33 +46,6 @@ def pdf2md_extractor(file_path:str):
         return ["Sem texto reconhecido no documento"]
     return text
 
-"""def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
-    file_bytes.seek(0)
-    ext = filename.split(".")[-1]
-
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}")
-
-    tmp.write(file_bytes.read())
-    tmp.flush()
-    tmp_path = tmp.name
-    tmp.close()
-
-    try:
-        result = conversor_pdf.convert(tmp_path)
-        text = result.document.export_to_markdown() or ""
-    finally:
-        os.remove(tmp_path) 
-
-    if not text.strip():
-        return ["Sem texto reconhecido no documento"]
-
-    return text"""
-
-"""def pdf2md_extractormod(file_bytes: BytesIO, filename: str):
-    file_bytes.seek(0)
-    text = extract_text(file_bytes)
-    return text    """
-
 def mp2txt_extractor(file_path:str):
         
     if has_audio(file_path):
@@ -97,16 +69,6 @@ def has_audio(file_path:str):
         
     if clip is not None:
         return True
-
-#depreciado
-def chunk_data(text_data:str):
-    splitter = RecursiveCharacterTextSplitter(
-        separators=["\n\n", "\n", ".", "?", "!", " ", ""],
-        chunk_size=1500,
-        chunk_overlap=200
-    )
-    chunks = splitter.split_text(text_data)
-    return [chunk.strip() for chunk in chunks if chunk.strip()]
 
 def gerar_embeddings(chunk):
     return embedding_model.embed_query(chunk)
