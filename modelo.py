@@ -178,7 +178,8 @@ def gerar_plano_de_estudo(user_prompt):
                                     REGRAS OBRIGATÓRIAS DE FORMATAÇÃO (SIGA SEMPRE):
 
                                     1. REGRAS PARA GERAÇÃO DOS SUMÁRIOS:
-                                    - "title" e "topicTitle": uma sentença curta que sumarize exatamente o que deve ser feito.
+                                    - "title": uma sentença curta que sumarize o conteúdo passado. Evite usar termologia genérica, como 'Roteiro de Estudos (Tópicos Passados).'
+                                    - "topicTitle": uma sentença curta que sumarize exatamente o que deve ser feito.
                                     - "description" (exceto checklist) deve ser composto de até 2 sentenças curtas e explicando a importância daquele tópico para o aprendizado.
                                     - "justification": de duas sentenças curtas, explicando o motivo da escolha daquele método para o tópico na primeira sentaça e abrindo um gancho 
                                     sobre a relação dessa com o próximo tópico com a segunda sentença.
