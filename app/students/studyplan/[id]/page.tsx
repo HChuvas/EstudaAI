@@ -75,7 +75,7 @@ export default function Page() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzgwNTIwLCJleHAiOjE3NjQ3ODQxMjB9.WOYEOvRbcFAkvrJYE9oo831_FGFRr_8axMXeXqyOvKc`
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
                 },
                 body: JSON.stringify({ completed: taskToUpdate?.completed })
             }).catch(err => {
@@ -111,7 +111,7 @@ export default function Page() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzgwNTIwLCJleHAiOjE3NjQ3ODQxMjB9.WOYEOvRbcFAkvrJYE9oo831_FGFRr_8axMXeXqyOvKc`
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
                 },
                 body: JSON.stringify({
                     itemId: updatedTask.id,
@@ -162,7 +162,7 @@ export default function Page() {
                     method: 'GET',
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzgwNTIwLCJleHAiOjE3NjQ3ODQxMjB9.WOYEOvRbcFAkvrJYE9oo831_FGFRr_8axMXeXqyOvKc`
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
                     }
                 });
 
