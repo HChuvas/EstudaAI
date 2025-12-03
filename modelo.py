@@ -19,7 +19,7 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv(
 
 llm_json = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("API_KEY"), response_mime_type="application/json")
 
-supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
+#supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
 
 vector_store = PGVector(
     connection_string=os.getenv("DATABASE_URL"),
@@ -526,20 +526,14 @@ def generate_summary():
     
     try:
         data = request.get_json()
-        print(data)
         user_prompt = ""
 
         for transcript in data:
             user_prompt += transcript.get("content")
-
-        print(user_prompt)
-
         if user_prompt == "":
             return jsonify({"error": "Campo 'material' é obrigatório"}), 400
 
         result = geracao_resumo_json_mode(user_prompt)
-        print(result)
-
         try:
             json_result = result
         
@@ -557,7 +551,6 @@ def generate_study_plan():
     
     try:
         data = request.get_json()
-        print(data)
 
         user_prompt = ""
 
@@ -713,9 +706,5 @@ def embed_chunk():
 # 3. verificar persistência da conversa dentro de um tópico
     
 if __name__ == "__main__":
-    #app.run(host="0.0.0.0", port=5000)
-
-    texto_teste = "Me diga o assunto do material"
-    resposta = conversar_com_llm(texto_teste)
-    print("Resposta:", resposta)
+    app.run(host="0.0.0.0", port=5000)
 
