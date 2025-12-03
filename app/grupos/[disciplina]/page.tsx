@@ -4,6 +4,7 @@ import { Navbar } from "@/app/components/navbar";
 import Image from "next/image";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import StudyPlanModal from './StudyPlanModal'
 
 type Topic = {
   id: string;
@@ -53,6 +54,7 @@ export default function TopicosPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
+  const [isStudyPlanModalOpen, setIsStudyPlanModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchTopics() {
@@ -230,7 +232,6 @@ export default function TopicosPage() {
 
         <div className="mt-8">
           <div className="flex flex-wrap gap-6">
-            {/* Adicionar tópico */}
             <div
               className={`${cardClass} flex items-center justify-center`}
               onClick={() => setIsAddTopicOpen(true)}
@@ -282,7 +283,7 @@ export default function TopicosPage() {
           <div className="flex flex-wrap gap-6">
             <div
               className={`${cardClass} flex items-center justify-center`}
-              onClick={() => setisFileUploadOpen(true)}
+              onClick={() => setIsStudyPlanModalOpen(true)}
             >
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2">
@@ -297,7 +298,7 @@ export default function TopicosPage() {
                 key={plan.id}
                 className={`${cardClass} bg-white flex flex-col justify-between`}
                 onClick={() => {
-                  router.push(`/students/studyplan/${plan.id}`); //não foi colocado id na pasta studyplan ainda
+                  router.push(`/students/studyplan/${plan.id}`);
                 }}
                 role="button"
                 tabIndex={0}
@@ -320,7 +321,6 @@ export default function TopicosPage() {
         </div>
       </main>
 
-      {/* Modal de adicionar tópico */}
       {isAddTopicOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center text-[#686464] bg-black/40">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -350,7 +350,6 @@ export default function TopicosPage() {
         </div>
       )}
 
-      {/* Modal de upar arquivo */}
       {isFileUploadOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 pb-12 bg-black/40">
           <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden">
@@ -492,6 +491,12 @@ export default function TopicosPage() {
           </div>
         </div>
       )}
+
+      <StudyPlanModal 
+        isOpen={isStudyPlanModalOpen}
+        onClose={() => setIsStudyPlanModalOpen(false)}
+        subjectId={disciplina as string}
+      />
     </div>
   );
 }
