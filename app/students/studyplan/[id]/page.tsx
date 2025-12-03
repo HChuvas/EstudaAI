@@ -1,9 +1,9 @@
 'use client';
 import Image from "next/image";
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import LoadingPage from "../../components/userStatePages/loading"
-import ErrorPage from "../../components/userStatePages/error"
+import { useParams, useSearchParams } from 'next/navigation';
+import LoadingPage from "../../../components/userStatePages/loading"
+import ErrorPage from "../../../components/userStatePages/error"
 
 type topics = {
     id : number;
@@ -50,7 +50,6 @@ type studyplan = {
 }
 
 export default function Page() {
-    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [studyplan, setStudyplan] = useState<studyplan>();
@@ -58,6 +57,7 @@ export default function Page() {
     const [modalTitle, setModalTitle] = useState('');
     const [modalDescription, setModalDescription] = useState('');
     const [savingTask, setSavingTask] = useState(false);
+    const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
 
     const toggleTaskCompletion = useCallback(async (taskId: number) => {        
         setStudyplan(prev => {
@@ -75,7 +75,7 @@ export default function Page() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzcyMDk0LCJleHAiOjE3NjQ3NzU2OTR9.Y_bA1wnM3YIqpJQpV3pwjvthqfLlpEHfErpvqLvNx8c`
+                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzgwNTIwLCJleHAiOjE3NjQ3ODQxMjB9.WOYEOvRbcFAkvrJYE9oo831_FGFRr_8axMXeXqyOvKc`
                 },
                 body: JSON.stringify({ completed: taskToUpdate?.completed })
             }).catch(err => {
@@ -111,7 +111,7 @@ export default function Page() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzcyMDk0LCJleHAiOjE3NjQ3NzU2OTR9.Y_bA1wnM3YIqpJQpV3pwjvthqfLlpEHfErpvqLvNx8c`
+                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzgwNTIwLCJleHAiOjE3NjQ3ODQxMjB9.WOYEOvRbcFAkvrJYE9oo831_FGFRr_8axMXeXqyOvKc`
                 },
                 body: JSON.stringify({
                     itemId: updatedTask.id,
@@ -150,8 +150,10 @@ export default function Page() {
         setModalDescription('');
     }, [savingTask]);
 
+    const params = useParams<{ id: string}>();
+    const id = params.id;
+    
     useEffect(() => {
-        const id = searchParams.get('id');
         const fetchStudyplanData = async() => {
             setLoading(true);
             
@@ -160,7 +162,7 @@ export default function Page() {
                     method: 'GET',
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzcyMDk0LCJleHAiOjE3NjQ3NzU2OTR9.Y_bA1wnM3YIqpJQpV3pwjvthqfLlpEHfErpvqLvNx8c`
+                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlclJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzY0NzgwNTIwLCJleHAiOjE3NjQ3ODQxMjB9.WOYEOvRbcFAkvrJYE9oo831_FGFRr_8axMXeXqyOvKc`
                     }
                 });
 
@@ -372,7 +374,12 @@ export default function Page() {
                     </div>
 
                     {(studyplan?.study_plans_checklist || []).map(task => (
-                        <div key={task.id} className={`flex flex-row ${task.completed ? 'bg-[#E3E3E3] line-through decoration-[#686464]' : ''}`}>
+                        <div 
+                            key={task.id} 
+                            className={`flex flex-row ${task.completed ? 'bg-[#E3E3E3] line-through decoration-[#686464]' : ''} ${hoveredTaskId === task.id && !task.completed ? 'bg-gray-50' : ''}`}
+                            onMouseEnter={() => setHoveredTaskId(task.id)}
+                            onMouseLeave={() => setHoveredTaskId(null)}
+                        >
                             <button 
                                 className="m-4 cursor-pointer flex-none"
                                 onClick={() => toggleTaskCompletion(task.id)}
