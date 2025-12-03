@@ -116,7 +116,7 @@ def conversar_com_llm(mensagem:str, context):
     {input}
 
     IMPORTANTE:
-    Se não houver informação suficiente no contexto, diga: 'Não encontrei essa informação no material.'
+    Se não houver informação suficiente no contexto que possa satisfazer à pergunta, ofereça, em sua resposta, os tópicos mais próximos, dado o contexto dado que podem se associar com o que o usuário busca. 
     """
 
     prompt = ChatPromptTemplate.from_template(prompt_template)
