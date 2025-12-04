@@ -1,27 +1,30 @@
 'use client';
 import Image from "next/image";
 import { useCallback, useEffect, useState, useRef } from 'react';
-import LoadingPage from "../../../components/userStatePages/loading"
-import ErrorPage from "../../../components/userStatePages/error"
-import ModalConfirmacao from "../../../components/userStatePages/modalConfirmarAcao"; 
-import { Navbar } from "../../../components/navbar";
-import { useSearchParams } from 'next/navigation';
-
-type ConteudoData = {
-  id: number;
-  titulo: string;
-  conteudo: string;
-}
+import LoadingPage from "../../components/userStatePages/loading"
+import ErrorPage from "../../components/userStatePages/error"
+import ModalConfirmacao from "../../components/userStatePages/modalConfirmarAcao"; 
+import { Navbar } from "../../components/navbar";
+import { useParams, useSearchParams } from 'next/navigation';
 
 type TopicoData = {
   id: number;
-  titulo: string;
-  conteudos: ConteudoData[];
+  content: string;
+  title: string;
+  topic_id: number;
 }
 
 type MaterialDocumento = {
   id: number;
-  nome: string;
+  public_url: string;
+}
+
+type MensagemAPI = {
+  id: number;
+  created_at: string;
+  userId: number | null;
+  topic_id: number;
+  content: string;
 }
 
 type Mensagem = {
@@ -36,7 +39,32 @@ type Chat = {
   mensagens: Mensagem[];
 }
 
+type TopicoCompletoData = {
+  topicos: TopicoData[];
+  materiais: MaterialDocumento[];
+  tituloTopico?: string;
+}
+
+type LLMResponse = {
+  resposta: string;
+}
+
+const renderizarTextoComNegrito = (texto: string) => {
+  if (!texto) return texto;
+  
+  const partes = texto.split(/(\*\*.*?\*\*)/g);
+  
+  return partes.map((parte, index) => {
+    if (parte.startsWith('**') && parte.endsWith('**')) {
+      const textoNegrito = parte.slice(2, -2);
+      return <strong key={index}>{textoNegrito}</strong>;
+    }
+    return parte;
+  });
+};
+
 export default function Page() {
+  const { id } = useParams();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,71 +73,20 @@ export default function Page() {
   const [conteudoTemp, setConteudoTemp] = useState('');
   const [tituloTemp, setTituloTemp] = useState('');
   const [modalDelecaoAberto, setModalDelecaoAberto] = useState(false);
-  const [conteudoParaDeletar, setConteudoParaDeletar] = useState<ConteudoData | null>(null);
+  const [topicoParaDeletar, setTopicoParaDeletar] = useState<TopicoData | null>(null);
   const [chatProcessando, setChatProcessando] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const [materiais, setMateriais] = useState<MaterialDocumento[]>([
-    {
-      id: 1,
-      nome: 'Aula_Ponteiros.MP3',
-    },
-    {
-      id: 2,
-      nome: 'Slide_Aula_Ponteiros_suahdasuhdasiuhdasiuhdasudh.pdf',
-    },
-    {
-      id: 3,
-      nome: 'Exercicios_Ponteiros.doc',
-    },
-    {
-      id: 4,
-      nome: 'Exercicios_Ponteiros.doc',
-    },
-    {
-      id: 5,
-      nome: 'Exercicios_Ponteiros.doc',
-    },
-    {
-      id: 6,
-      nome: 'Exercicios_Ponteiros.doc',
-    }
-  ]);
+  const [topicoCompleto, setTopicoCompleto] = useState<TopicoCompletoData>({
+    topicos: [],
+    materiais: [],
+    tituloTopico: ''
+  });
 
   const [chat, setChat] = useState<Chat>({
     id: 0,
-    mensagens: [
-      {
-        id: 0,
-        conteudo: 'teste teste teste teste',
-        tempo: 'teste',
-        ia: false 
-      },
-      {
-        id: 1,
-        conteudo: 'teste teste teste teste',
-        tempo: 'teste',
-        ia: true 
-      }
-    ]
-  });
-
-  const [topicoData, setTopicoData] = useState<TopicoData>({
-    id: 1,
-    titulo: 'Ponteiros em C',
-    conteudos: [
-      {
-        id: 1,
-        titulo: 'Transcrição do Arquivo Original',
-        conteudo: 'A utilização de ponteiros em linguagem C é uma das características que tornam a linguagem tão flexível e poderosa. Ponteiros ou apontadores, são variáveis que armazenam o endereço de memória de outras variáveis. Dizemos que um ponteiro "aponta" para uma varíável quando contém o endereço da mesma. Os ponteiros podem apontar para qualquer tipo de variável. Portanto temos ponteiros para int, float, double, etc.'
-      },
-      {
-        id: 2,
-        titulo: 'Resumo gerado por IA', 
-        conteudo: `Os Ponteiros representam a elite suprema das operações em C, uma casta especial de variáveis que transcendem a mera armazenagem de valores convencionais para operar em um plano superior: o das coordenadas de memória. Estes não são meros portadores de dados, mas sim navegadores cósmicos que, em vez de carregarem planetas (valores) em sua essência, detêm os mapas estelares mais precisos com as localizações exatas (endereços) onde esses corpos celestes orbitam na vastidão do espaço de memória. Eles são os cartógrafos do universo digital, os únicos capazes de mapear e percorrer diretamente as constelações de bytes que compõem a realidade computacional.`
-      }
-    ]
+    mensagens: []
   });
 
   const handleAdicionarMaterial = useCallback(() => {
@@ -117,38 +94,20 @@ export default function Page() {
     alert('Funcionalidade de adicionar novo material será implementada aqui');
   }, []);
 
-  const handleBaixarMaterial = useCallback(async (material: MaterialDocumento) => {
+  const handleAbrirMaterial = useCallback((material: MaterialDocumento) => {
     try {
-      setLoading(true);
-      console.log('Baixando material:', material.nome);
-
-      const response = await fetch(`/materiais/${material.id}`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) throw new Error('Erro ao baixar material');
-
-      const blob = await response.blob();
+      const token = localStorage.getItem('accessToken');
+      let url = material.public_url;
       
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = material.nome;
+      if (token && url.includes('supabase.co')) {
+        url = `${url}?token=${token}`;
+      }
       
-      document.body.appendChild(a);
-      a.click();
+      window.open(url, '_blank', 'noopener,noreferrer');
       
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      console.log('Material baixado com sucesso:', material.nome);
-
     } catch (err) {
-      console.error('Erro ao baixar material:', err);
-      alert('Erro ao baixar material. Tente novamente.');
-    } finally {
-      setLoading(false);
+      console.error('Erro ao abrir material:', err);
+      alert('Erro ao abrir material. Tente novamente.');
     }
   }, []);
 
@@ -162,35 +121,38 @@ export default function Page() {
     scrollToBottom();
   }, [chat.mensagens, scrollToBottom]);
 
-  const handleIniciarEdicao = useCallback((conteudo: ConteudoData) => {
-    setEditandoId(conteudo.id);
-    setTituloTemp(conteudo.titulo);
-    setConteudoTemp(conteudo.conteudo);
+  const handleIniciarEdicao = useCallback((topico: TopicoData) => {
+    setEditandoId(topico.id);
+    setTituloTemp(topico.title);
+    setConteudoTemp(topico.content);
   }, []);
 
   const handleSalvarEdicao = useCallback(async (id: number) => {
     try {
       setLoading(true);
       
-      const response = await fetch(`/topico/conteudo/${id}`, {
+      const token = localStorage.getItem('accessToken');
+      
+      const response = await fetch(`http://localhost:8080/students/topic/summaries/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          titulo: tituloTemp,
-          conteudo: conteudoTemp,
+          title: tituloTemp,
+          content: conteudoTemp,
         }),
       });
 
       if (!response.ok) throw new Error('Erro ao salvar edição');
 
-      setTopicoData(prev => ({
+      setTopicoCompleto(prev => ({
         ...prev,
-        conteudos: prev.conteudos.map(conteudo =>
-          conteudo.id === id
-            ? { ...conteudo, titulo: tituloTemp, conteudo: conteudoTemp }
-            : conteudo
+        topicos: prev.topicos.map(topico =>
+          topico.id === id
+            ? { ...topico, title: tituloTemp, content: conteudoTemp }
+            : topico
         )
       }));
 
@@ -211,54 +173,69 @@ export default function Page() {
     setConteudoTemp('');
   }, []);
 
-  const handleAbrirModalDelecao = useCallback((conteudo: ConteudoData) => {
-    setConteudoParaDeletar(conteudo);
+  const handleAbrirModalDelecao = useCallback((topico: TopicoData) => {
+    setTopicoParaDeletar(topico);
     setModalDelecaoAberto(true);
   }, []);
 
   const handleConfirmarDelecao = useCallback(async () => {
-    if (!conteudoParaDeletar) return;
+    if (!topicoParaDeletar) return;
 
     try {
       setLoading(true);
       
-      const response = await fetch(`/topico/conteudo/${conteudoParaDeletar.id}`, {
+      const token = localStorage.getItem('accessToken');
+      
+      const response = await fetch(`http://localhost:8080/students/topic/summaries/${topicoParaDeletar.id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
-      if (!response.ok) throw new Error('Erro ao deletar conteúdo');
+      if (!response.ok) throw new Error('Erro ao deletar tópico');
 
-      setTopicoData(prev => ({
+      setTopicoCompleto(prev => ({
         ...prev,
-        conteudos: prev.conteudos.filter(conteudo => conteudo.id !== conteudoParaDeletar.id)
+        topicos: prev.topicos.filter(topico => topico.id !== topicoParaDeletar.id)
       }));
 
-      console.log('Conteúdo deletado com sucesso!');
+      console.log('Tópico deletado com sucesso!');
       
     } catch (err) {
-      console.error('Erro ao deletar conteúdo:', err);
-      alert('Erro ao deletar conteúdo. Tente novamente.');
+      console.error('Erro ao deletar tópico:', err);
+      alert('Erro ao deletar tópico. Tente novamente.');
     } finally {
       setLoading(false);
       setModalDelecaoAberto(false);
-      setConteudoParaDeletar(null);
+      setTopicoParaDeletar(null);
     }
-  }, [conteudoParaDeletar]);
+  }, [topicoParaDeletar]);
 
   const handleCancelarDelecao = useCallback(() => {
     setModalDelecaoAberto(false);
-    setConteudoParaDeletar(null);
+    setTopicoParaDeletar(null);
   }, []);
 
   const handleAtualizarTranscricao = useCallback(() => {
     console.log('Botão: Atualizar Transcrição');
   }, []);
 
-  const handleEnviarMensagem = useCallback(() => {
+  const handleEnviarMensagem = useCallback(async () => {
     if (!mensagem.trim() || chatProcessando) return;
 
-    console.log('Botão: Enviar Mensagem', mensagem);
-    
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      alert('Usuário não autenticado');
+      return;
+    }
+
+    const topicId = searchParams.get('topicId') || id;
+    if (!topicId) {
+      alert('ID do tópico não encontrado');
+      return;
+    }
+
     const novaMensagemUsuario: Mensagem = {
       id: Date.now(),
       conteudo: mensagem.trim(),
@@ -271,26 +248,57 @@ export default function Page() {
       mensagens: [...prev.mensagens, novaMensagemUsuario]
     }));
 
+    const mensagemOriginal = mensagem.trim();
     setMensagem('');
     setChatProcessando(true);
 
-    setTimeout(() => {
-      const respostaIA: Mensagem = {
+    try {
+      await fetch(`http://localhost:8080/students/topic/messages?topicId=${topicId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          content: mensagemOriginal
+        })
+      });
+
+      const llmResponse = await fetch(`http://localhost:8080/students/llm/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: mensagemOriginal,
+          topicId: parseInt(topicId.toString())
+        })
+      });
+
+      if (!llmResponse.ok) throw new Error('Erro ao obter resposta da IA');
+
+      const data: LLMResponse = await llmResponse.json();
+
+      const novaRespostaIA: Mensagem = {
         id: Date.now() + 1,
-        conteudo: `Recebi sua mensagem: "${mensagem.trim()}". Como posso ajudá-lo?`,
+        conteudo: data.resposta,
         tempo: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         ia: true
       };
 
       setChat(prev => ({
         ...prev,
-        mensagens: [...prev.mensagens, respostaIA]
+        mensagens: [...prev.mensagens, novaRespostaIA]
       }));
 
+    } catch (err) {
+      console.error('Erro:', err);
+      alert(err instanceof Error ? err.message : 'Erro ao processar mensagem');
+    } finally {
       setChatProcessando(false);
-    }, 1000);
-
-  }, [mensagem, chatProcessando]);
+    }
+  }, [mensagem, chatProcessando, searchParams, id]);
 
   const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     if (!chatProcessando) {
@@ -302,32 +310,117 @@ export default function Page() {
     if (event.key === 'Enter' && mensagem.trim() && !chatProcessando) {
       handleEnviarMensagem();
     }
-    }, [mensagem, chatProcessando, handleEnviarMensagem]);
+  }, [mensagem, chatProcessando, handleEnviarMensagem]);
+
+  const fetchMensagensChat = useCallback(async (topicId: string, token: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/students/topic/messages?topicId=${topicId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch messages");
+
+      const mensagensAPI: MensagemAPI[] = await response.json();
+      
+      const mensagensConvertidas: Mensagem[] = mensagensAPI.map(msg => ({
+        id: msg.id,
+        conteudo: msg.content,
+        tempo: new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        ia: msg.userId === null
+      }));
+
+      setChat(prev => ({
+        ...prev,
+        mensagens: mensagensConvertidas
+      }));
+
+    } catch (err) {
+      console.error('Erro ao carregar mensagens do chat:', err);
+    }
+  }, []);
 
   useEffect(() => {
-    const subjectIdParam = searchParams.get('subjectId');
-    const fetchTopicoData = async() => {
+    const topicId = searchParams.get('topicId') || id;
+    const token = localStorage.getItem('accessToken');
+
+    if (!topicId || !token) return;
+
+    let mounted = true;
+
+    const fetchTopicData = async () => {
+      if (!mounted) return;
+      
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/students/subjects/topics?subjectId=${subjectIdParam}`);
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
 
-        if (!response.ok) throw new Error("Failed to fetch Users");
-        const data = await response.json();
-          
-        setTopicoData(data);
+        const [materialsResponse, summariesResponse] = await Promise.all([
+          fetch(`http://localhost:8080/students/topic/materials?topicId=${topicId}`, {
+            method: 'GET',
+            headers
+          }),
+          fetch(`http://localhost:8080/students/topic/summaries?topicId=${topicId}`, {
+            method: 'GET',
+            headers
+          })
+        ]);
+
+        if (!materialsResponse.ok) {
+          throw new Error("Failed to fetch materials");
+        }
+
+        if (!summariesResponse.ok) {
+          throw new Error("Failed to fetch summaries");
+        }
+
+        const [materiais, topicos] = await Promise.all([
+          materialsResponse.json(),
+          summariesResponse.json()
+        ]);
+
+        if (mounted) {
+          setTopicoCompleto({
+            topicos: topicos || [],
+            materiais: materiais || [],
+            tituloTopico: `Tópico ${topicId}`
+          });
+
+          await fetchMensagensChat(topicId.toString(), token);
+        }
 
       } catch (err) {
-        if (err instanceof Error){
-        } else {
+        if (mounted) {
+          if (err instanceof Error){
+            setError(err.message);
+          } else {
+            setError('Erro desconhecido ao carregar dados');
+          }
         }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    }
-    fetchTopicoData();
-  }, []);
+    };
+
+    fetchTopicData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams, id]); // Removi fetchMensagensChat das dependências
 
   return(
     <main>
@@ -335,8 +428,8 @@ export default function Page() {
       
       <ModalConfirmacao
         isOpen={modalDelecaoAberto}
-        titulo="Excluir Conteúdo"
-        mensagem={`Tem certeza que deseja excluir "${conteudoParaDeletar?.titulo}"? Esta ação não pode ser desfeita.`}
+        titulo="Excluir Tópico"
+        mensagem={`Tem certeza que deseja excluir "${topicoParaDeletar?.title}"? Esta ação não pode ser desfeita.`}
         onConfirmar={handleConfirmarDelecao}
         onCancelar={handleCancelarDelecao}
         loading={loading}
@@ -350,7 +443,7 @@ export default function Page() {
         <div className="flex min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] gap-4 bg-white w-full p-4 box-border">
           <section className="overflow-y-auto flex flex-col flex-1 gap-4 border-2 border-[#098842] bg-white rounded-xl p-4 max-h-[calc(100vh-6rem)] w-7/10 drop-shadow-md">
             <h1 className="font-montserrat font-bold text-[#686464] text-center m-0 pt-2 text-2xl">
-              {topicoData.titulo}
+              {topicoCompleto.tituloTopico || 'Tópico'}
             </h1> 
 
             <div className="flex flex-col pl-2 pr-3 pt-2 pb-3 border-[1.5px] border-[#098842] rounded-2xl bg-[#F5F5F5]">
@@ -384,33 +477,33 @@ export default function Page() {
                   </span>
                 </button>
                 
-                {materiais.map(material => (
+                {topicoCompleto.materiais.map(material => (
                   <button 
                     key={material.id} 
-                    className="flex grow-0 flex-col justify-around items-center min-w-36 min-h-20  max-w-36 max-h-20 pt-3 ml-2 mb-2 border-[1.5px] border-[#098842] rounded-xl shrink-0 bg-[#F5F5F5] hover:bg-[#e8f5e8] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#098842] focus:ring-opacity-50"
-                    onClick={() => handleBaixarMaterial(material)}
+                    className="flex grow-0 flex-col justify-around items-center min-w-36 min-h-20 max-w-36 max-h-20 pt-3 ml-2 mb-2 border-[1.5px] border-[#098842] rounded-xl shrink-0 bg-[#F5F5F5] hover:bg-[#e8f5e8] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#098842] focus:ring-opacity-50"
+                    onClick={() => handleAbrirMaterial(material)}
                     disabled={loading}
-                    aria-label={`Baixar ${material.nome}`}
+                    aria-label={`Abrir material ${material.id}`}
                   >
                     <Image 
                       src="/imagens/file.svg" 
                       width={36} 
                       height={20} 
                       className="mx-14" 
-                      alt={`Ícone do ${material.nome}`}
+                      alt={`Ícone do material`}
                     />
                     <span className="font-montserrat font-normal text-[0.7rem] text-center text-[#098842] mx-0.5 px-1 w-full truncate">
-                      {material.nome}
+                      {material.public_url.split('/').pop() || `Material ${material.id}`}
                     </span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {topicoData.conteudos.map(conteudo => (
-              <div key={conteudo.id} className="flex-1 pr-3 pl-2 pt-2 pb-3 border-[1.5px] border-[#098842] rounded-2xl bg-[#F5F5F5] text-black">
+            {topicoCompleto.topicos.map(topico => (
+              <div key={topico.id} className="flex-1 pr-3 pl-2 pt-2 pb-3 border-[1.5px] border-[#098842] rounded-2xl bg-[#F5F5F5] text-black">
                 <span className="flex justify-between items-center mb-2 px-0.5 py-0.5">
-                  {editandoId === conteudo.id ? (
+                  {editandoId === topico.id ? (
                     <input
                       type="text"
                       value={tituloTemp}
@@ -420,16 +513,16 @@ export default function Page() {
                     />
                   ) : (
                     <h2 className="font-montserrat font-bold text-[#494949] text-left mb-2 text-lg">
-                      {conteudo.titulo}
+                      {topico.title}
                     </h2>
                   )}
                   <div className="flex gap-2">
-                    {editandoId === conteudo.id ? (
+                    {editandoId === topico.id ? (
                       <>
                         <button 
                           className="w-5 h-5 cursor-pointer hover:opacity-70 transition-opacity" 
                           aria-label="Salvar edição"
-                          onClick={() => handleSalvarEdicao(conteudo.id)}
+                          onClick={() => handleSalvarEdicao(topico.id)}
                         >
                           <Image src="/imagens/check.svg" width={20} height={20} alt="Salvar"/>
                         </button>
@@ -445,8 +538,8 @@ export default function Page() {
                       <>
                         <button 
                           className="w-5 h-5 cursor-pointer hover:opacity-70 transition-opacity" 
-                          aria-label="Excluir conteúdo"
-                          onClick={() => handleAbrirModalDelecao(conteudo)}
+                          aria-label="Excluir tópico"
+                          onClick={() => handleAbrirModalDelecao(topico)}
                         >
                           <Image src="/imagens/X-pequeno.svg" width={20} height={20} alt="Excluir"/>
                         </button>
@@ -455,19 +548,19 @@ export default function Page() {
                   </div>
                 </span>
                 
-                {editandoId === conteudo.id ? (
+                {editandoId === topico.id ? (
                   <textarea
                     value={conteudoTemp}
                     onChange={(e) => setConteudoTemp(e.target.value)}
                     className="font-montserrat font-normal text-[#494949] text-left leading-6 m-0 w-full h-64 p-2 border border-[#098842] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#098842]"
                   />
                 ) : (
-                  <p className="font-montserrat font-normal text-[#494949] text-left leading-6 m-0 text-clamp-1">
-                    {conteudo.conteudo}
-                  </p>
+                  <div className="font-montserrat font-normal text-[#494949] text-left leading-6 m-0 text-clamp-1">
+                    {renderizarTextoComNegrito(topico.content)}
+                  </div>
                 )}
                 
-                {editandoId !== conteudo.id && (
+                {editandoId !== topico.id && (
                   <span className="flex flex-row justify-end gap-5 px-0.5 py-0.5 mt-4">
                     <button 
                       className="w-5 h-5 cursor-pointer hover:opacity-70 transition-opacity" 
@@ -479,7 +572,7 @@ export default function Page() {
                     <button 
                       className="w-5 h-5 cursor-pointer hover:opacity-70 transition-opacity" 
                       aria-label="Editar"
-                      onClick={() => handleIniciarEdicao(conteudo)}
+                      onClick={() => handleIniciarEdicao(topico)}
                     >
                       <Image src="/imagens/editar.svg" width={20} height={20} alt="Editar"/>
                     </button>
@@ -496,7 +589,9 @@ export default function Page() {
             >
               {chat.mensagens.map(mensagem => ( 
                 <div key={mensagem.id} className={mensagem.ia ? "self-start max-w-80 p-3 bg-white border-2 border-[#098842] rounded-2xl text-[#333333] font-montserrat text-sm leading-6 relative box-border" : "self-end max-w-80 p-3 bg-[#098842] rounded-2xl text-white font-montserrat text-sm leading-6 relative box-border"}>
-                  {mensagem.conteudo}
+                  <div className="font-montserrat text-sm leading-6">
+                    {renderizarTextoComNegrito(mensagem.conteudo)}
+                  </div>
                   <div className="text-[0.7rem] opacity-80 mt-1 text-right">{mensagem.tempo}</div>
                 </div>
               ))}

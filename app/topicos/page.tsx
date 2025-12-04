@@ -1,11 +1,11 @@
 'use client';
 import Image from "next/image";
 import { useCallback, useEffect, useState, useRef } from 'react';
-import LoadingPage from "../../../../components/userStatePages/loading"
-import ErrorPage from "../../../../components/userStatePages/error"
-import ModalConfirmacao from "../../../../components/userStatePages/modalConfirmarAcao"; 
-import { Navbar } from "../../../../components/navbar";
-import { useParams, useSearchParams } from 'next/navigation';
+import LoadingPage from "../components/userStatePages/loading"
+import ErrorPage from "../components/userStatePages/error"
+import ModalConfirmacao from "../components/userStatePages/modalConfirmarAcao"; 
+import { Navbar } from "../components/navbar";
+import { useSearchParams } from 'next/navigation';
 
 type ConteudoData = {
   id: number;
@@ -37,7 +37,6 @@ type Chat = {
 }
 
 export default function Page() {
-  const { id } = useParams();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +57,7 @@ export default function Page() {
     },
     {
       id: 2,
-      nome: 'Slide_Aula_Ponteiros.pdf',
+      nome: 'Slide_Aula_Ponteiros_suahdasuhdasiuhdasiuhdasudh.pdf',
     },
     {
       id: 3,
