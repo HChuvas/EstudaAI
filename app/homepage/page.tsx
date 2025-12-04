@@ -67,6 +67,16 @@ export default function HomePage() {
     fetchUser();
   }, []);
 
+  const handleLogout = () => {
+  try {
+    localStorage.removeItem("accessToken");
+  } catch (e) {
+    console.warn("Erro ao remover token:", e);
+  }
+
+  router.push("/");
+};
+
   return (
     <div className="w-screen min-h-screen">
       <Navbar />
@@ -91,7 +101,10 @@ export default function HomePage() {
         </div>
 
         <div className="mt-6">
-          <button className="flex items-center gap-3 p-3 w-1/2 border border-[#098842] bg-[#F5F5F5] hover:text-red-600 rounded-xl cursor-pointer">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 p-3 w-1/2 border border-[#098842] bg-[#F5F5F5] hover:text-red-600 rounded-xl cursor-pointer"
+          >
             <Image 
               src="/imagens/sair.svg"
               width={20}

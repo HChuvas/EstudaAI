@@ -223,6 +223,13 @@ export default function Page() {
           <h1 className="text-2xl py-10 underline decoration-[#098842]/85">Lembretes</h1>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pr-8">
+            <div className="h-62 rounded-xl border-1 border-[#098842] border flex flex-col justify-center items-center cursor-pointer hover:bg-gray-50 gap-3" onClick={openCreateModal}>
+              <button>
+                <Image src="/imagens/add.svg" width={34} height={34} alt="Adicionar Lembrete" className="cursor-pointer hover:opacity-80" />
+              </button>
+              <span className="text-[#686464] font-medium">Adicionar Lembrete</span>
+            </div>
+
             {loading && <div>Carregando...</div>}
             {reminders.map((reminder) => (
               <div
@@ -287,11 +294,6 @@ export default function Page() {
               </div>
             ))}
 
-            <div className="h-62 rounded-xl border-1 border-[#098842] border flex justify-center items-center cursor-pointer hover:bg-gray-50" onClick={openCreateModal}>
-              <button>
-                <Image src="/imagens/add.svg" width={34} height={34} alt="Adicionar Lembrete" className="cursor-pointer hover:opacity-80" />
-              </button>
-            </div>
           </div>
         </div>
       </div>
