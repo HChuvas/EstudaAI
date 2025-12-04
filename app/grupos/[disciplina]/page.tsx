@@ -346,9 +346,9 @@ export default function TopicosPage() {
                   setNewTopicTitle("");
                 }}
               >
-                Cancelar
+                <span className="px-4.5 py-2.5 text-[#444444] font-semibold cursor-pointer bg-[#D9D9D9] rounded">Cancelar</span>
               </button>
-              <button className="px-4 py-2 bg-[#098842] text-white rounded" onClick={handleAddTopic}>
+              <button className="px-4 py-2 bg-[#098842] font-semibold cursor-pointer text-white rounded" onClick={handleAddTopic}>
                 Adicionar
               </button>
             </div>
