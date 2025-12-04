@@ -155,7 +155,7 @@ export default function TopicosPage() {
   }
 
   function openTopic(topicId: string) {
-    router.push(`/students/subjects/topic/${topicId}`)
+    router.push(`/topicos/${topicId}`)
   }
 
   const handleFilesAdd = useCallback((files: FileList | null) => {
@@ -217,7 +217,7 @@ export default function TopicosPage() {
       console.error("Erro no upload:", err);
     } finally {
       setIsUploading(false);
-      router.push(`/students/subjects/topic/${createdTopicId}`)
+      router.push(`/topicos/${createdTopicId}`)
     }
   }
 
