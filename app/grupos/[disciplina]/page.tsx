@@ -23,6 +23,97 @@ type StudyPlan = {
   created_at: Date
 }
 
+// Componente do Popup de Progresso
+function PipelineProgressModal({ 
+  isOpen, 
+  currentStep, 
+  totalSteps,
+  stepMessage 
+}: { 
+  isOpen: boolean; 
+  currentStep: number; 
+  totalSteps: number; 
+  stepMessage: string;
+}) {
+  if (!isOpen) return null;
+
+  const progressPercentage = (currentStep / totalSteps) * 100;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 mb-4">
+          </div>
+          
+          <h3 className="text-xl font-semibold text-[#444] mb-2">
+            Processando Materiais
+          </h3>
+          
+          <p className="text-[#666] text-center mb-6">
+            {stepMessage}
+          </p>
+          
+          {/* Barra de Progresso */}
+          <div className="w-full mb-2">
+            <div className="flex justify-between text-sm text-[#666] mb-1">
+              <span>Progresso</span>
+              <span>{currentStep} de {totalSteps} etapas</span>
+            </div>
+            
+            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#098842] rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+          
+          {/* Indicadores de Etapas */}
+          <div className="flex justify-between w-full mt-6 px-2">
+            <div className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentStep >= 1 ? 'bg-[#098842]' : 'bg-gray-300'}`}>
+                {currentStep > 1 ? (
+                  <Image src="/imagens/check.svg" width={16} height={16} alt="Concluído" />
+                ) : (
+                  <span className={`text-sm font-medium ${currentStep >= 1 ? 'text-white' : 'text-gray-600'}`}>1</span>
+                )}
+              </div>
+              <span className="text-xs text-[#666]">Upload</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentStep >= 2 ? 'bg-[#098842]' : 'bg-gray-300'}`}>
+                {currentStep > 2 ? (
+                  <Image src="/imagens/check.svg" width={16} height={16} alt="Concluído" />
+                ) : (
+                  <span className={`text-sm font-medium ${currentStep >= 2 ? 'text-white' : 'text-gray-600'}`}>2</span>
+                )}
+              </div>
+              <span className="text-xs text-[#666]">Processamento</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentStep >= 3 ? 'bg-[#098842]' : 'bg-gray-300'}`}>
+                {currentStep > 3 ? (
+                  <Image src="/imagens/check.svg" width={16} height={16} alt="Concluído" />
+                ) : (
+                  <span className={`text-sm font-medium ${currentStep >= 3 ? 'text-white' : 'text-gray-600'}`}>3</span>
+                )}
+              </div>
+              <span className="text-xs text-[#666]">Resumo</span>
+            </div>
+          </div>
+          
+          <p className="text-sm text-[#666] text-center mt-6">
+            Por favor, aguarde enquanto processamos seus arquivos...
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TopicosPage() {
   const pathname = usePathname() || "";
   const router = useRouter();
@@ -31,14 +122,6 @@ export default function TopicosPage() {
     const parts = pathname.split("/").filter(Boolean);
     return parts.length ? parts[parts.length - 1] : "disciplina";
   }, [pathname]);
-
-  // const disciplineName = useMemo(() => {
-  //   return disciplineSlug
-  //     .replace(/[-_]/g, " ")
-  //     .split(" ")
-  //     .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-  //     .join(" ");
-  // }, [disciplineSlug]);
 
   const { disciplina } = useParams();
   const search = useSearchParams();
@@ -54,10 +137,16 @@ export default function TopicosPage() {
   const [isFileUploadOpen, setisFileUploadOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   const [isStudyPlanModalOpen, setIsStudyPlanModalOpen] = useState(false);
   const [isViewPlanModalOpen, setIsViewPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+
+  // Estados para o popup de progresso
+  const [showPipelineProgress, setShowPipelineProgress] = useState(false);
+  const [pipelineStep, setPipelineStep] = useState(0);
+  const [pipelineMessage, setPipelineMessage] = useState("");
 
   useEffect(() => {
     async function fetchTopics() {
@@ -190,6 +279,85 @@ export default function TopicosPage() {
     setSelectedFiles((s) => s.filter((_, i) => i !== index));
   }
 
+  async function runSummaryPipeline(topicId: string) {
+    try {
+      // Mostra o popup de progresso
+      setShowPipelineProgress(true);
+      setPipelineStep(1);
+      setPipelineMessage("Enviando arquivos para processamento...");
+      
+      const token = localStorage.getItem("accessToken");
+      const topicIdNum = parseInt(topicId);
+
+      // Etapa 1: Enviar materiais
+      setPipelineStep(2);
+      setPipelineMessage("Processando conteúdos dos arquivos...");
+      
+      const sendResponse = await fetch("http://localhost:8080/students/llm/materials/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ topicId: topicIdNum })
+      });
+
+      if (!sendResponse.ok) throw new Error("Erro no envio de materiais");
+
+      // Etapa 2: Gerar embeddings
+      setPipelineStep(3);
+      setPipelineMessage("Analisando e organizando informações...");
+      
+      const embedResponse = await fetch("http://localhost:8080/students/llm/embed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ topicId: topicIdNum })
+      });
+
+      if (!embedResponse.ok) throw new Error("Erro na geração de embeddings");
+
+      // Etapa 3: Gerar resumo
+      setPipelineStep(4);
+      setPipelineMessage("Gerando resumos com IA...");
+      
+      const generateResponse = await fetch("http://localhost:8080/students/llm/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ topicId: topicIdNum })
+      });
+
+      if (!generateResponse.ok) throw new Error("Erro na geração de resumo");
+
+      const data = await generateResponse.json();
+      console.log("Pipeline de resumo concluída com sucesso:", data);
+
+      // Finaliza com sucesso
+      setPipelineStep(5);
+      setPipelineMessage("Processamento concluído com sucesso!");
+      
+      // Aguarda um pouco para mostrar a mensagem de sucesso
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+    } catch (error) {
+      console.error("Erro na pipeline de resumo:", error);
+      setPipelineMessage("Erro no processamento. Tente novamente.");
+      throw error;
+    } finally {
+      // Esconde o popup após um breve delay
+      setTimeout(() => {
+        setShowPipelineProgress(false);
+        setPipelineStep(0);
+        setIsGeneratingSummary(false);
+      }, 1500);
+    }
+  }
+
   async function handleSendTopicFiles() {
     if (selectedFiles.length === 0) return;
     setIsUploading(true);
@@ -199,6 +367,11 @@ export default function TopicosPage() {
     selectedFiles.forEach((f) => form.append("files", f));
 
     try {
+      // Etapa 0: Upload dos arquivos
+      setPipelineStep(1);
+      setPipelineMessage("Fazendo upload dos arquivos...");
+      setShowPipelineProgress(true);
+
       const res = await fetch("http://localhost:8080/students/materials/upload", {
         method: "POST",
         headers: {
@@ -209,15 +382,25 @@ export default function TopicosPage() {
 
       if (!res.ok) {
         console.error("Upload falhou");
+        setPipelineMessage("Erro no upload. Tente novamente.");
+        setTimeout(() => setShowPipelineProgress(false), 2000);
+        return;
       } else {
         setSelectedFiles([]);
         setisFileUploadOpen(false);
+        
+        // Executa a pipeline de resumo
+        await runSummaryPipeline(createdTopicId);
+        
+        // Navega para o tópico
+        router.push(`/topicos/${createdTopicId}`);
       }
     } catch (err) {
       console.error("Erro no upload:", err);
+      setPipelineMessage("Erro no processamento. Tente novamente.");
+      setTimeout(() => setShowPipelineProgress(false), 2000);
     } finally {
       setIsUploading(false);
-      router.push(`/topicos/${createdTopicId}`)
     }
   }
 
@@ -478,7 +661,7 @@ export default function TopicosPage() {
                       onClick={() => {
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      disabled={isUploading}
+                      disabled={isUploading || isGeneratingSummary}
                     >
                       Voltar
                     </button>
@@ -486,9 +669,9 @@ export default function TopicosPage() {
                     <button
                       className="px-6 py-3 bg-[#098842] text-white rounded disabled:opacity-60"
                       onClick={handleSendTopicFiles}
-                      disabled={isUploading || selectedFiles.length === 0}
+                      disabled={isUploading || isGeneratingSummary || selectedFiles.length === 0}
                     >
-                      {isUploading ? "Enviando..." : "Enviar"}
+                      {isUploading ? "Enviando..." : isGeneratingSummary ? "Gerando resumo..." : "Enviar e Gerar Resumo"}
                     </button>
                   </div>
                 </div>
@@ -514,6 +697,14 @@ export default function TopicosPage() {
           planId={selectedPlanId}
         />
       )}
+
+      {/* Popup de Progresso da Pipeline */}
+      <PipelineProgressModal 
+        isOpen={showPipelineProgress}
+        currentStep={pipelineStep}
+        totalSteps={5}
+        stepMessage={pipelineMessage}
+      />
     </div>
   );
 }
