@@ -357,13 +357,11 @@ def generate_study_plan():
 def chat():
     try:
         data = request.get_json()
-
-        if not data:
-            return jsonify({"erro": "Envie uma mensagem. Campo 'mensagem' obrigatório."}), 400
         
         text = data['message']
         context = data['context']
         former_messages = data['formattedMessages']
+
         response = conversar_com_llm(text, context, former_messages)
 
         return jsonify({"resposta": response})
