@@ -2,7 +2,7 @@
 
 import { Navbar } from "@/app/components/navbar";
 import Image from "next/image";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import CreateStudyPlanModal from './CreateStudyPlanModal';
 import StudyPlanModal from './StudyPlanModal';
@@ -143,10 +143,17 @@ export default function TopicosPage() {
   const [isViewPlanModalOpen, setIsViewPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
 
-  // Estados para o popup de progresso
+
   const [showPipelineProgress, setShowPipelineProgress] = useState(false);
   const [pipelineStep, setPipelineStep] = useState(0);
   const [pipelineMessage, setPipelineMessage] = useState("");
+ 
+  const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     async function fetchTopics() {
@@ -215,6 +222,9 @@ export default function TopicosPage() {
       setCreatedTopicId(data.id)
       setNewTopicTitle("");
       setIsAddTopicOpen(false)
+
+      setSelectedFiles([]);
+
       setisFileUploadOpen(true)
     } catch (error) {
       console.error("Erro ao criar tópico:", error)
@@ -243,31 +253,56 @@ export default function TopicosPage() {
     }
   }
 
+  const confirmDelete = async () => {
+    if (!topicToDelete) return;
+    try {
+      await handleDeleteTopic(topicToDelete.id);
+      setShowDeleteModal(false);
+      setTopicToDelete(null);
+      if (expandedTopicId === topicToDelete.id) setExpandedTopicId(null);
+    } catch (err) {
+      console.error("Erro ao confirmar exclusão:", err);
+    }
+  };
+
   function openTopic(topicId: string) {
     router.push(`/topicos/${topicId}`)
   }
 
+  const mergeFilesUnique = (prev: File[], incoming: File[]) => {
+    const all = [...prev, ...incoming];
+    const unique = all.reduce<File[]>((acc, f) => {
+      if (!acc.find((x) => x.name === f.name && x.size === f.size)) acc.push(f);
+      return acc;
+    }, []);
+    return unique;
+  }
+
   const handleFilesAdd = useCallback((files: FileList | null) => {
     if (!files) return;
-    setSelectedFiles((prev) => {
-      const incoming = Array.from(files);
-      const all = [...prev, ...incoming];
-      const unique = all.reduce<File[]>((acc, f) => {
-        if (!acc.find((x) => x.name === f.name && x.size === f.size)) acc.push(f);
-        return acc;
-      }, []);
-      return unique;
-    });
+    const incoming = Array.from(files);
+    setSelectedFiles((prev) => mergeFilesUnique(prev, incoming));
   }, []);
 
   function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    handleFilesAdd(e.target.files);
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      try { e.target.value = ""; } catch { /* ignore */ }
+      return;
+    }
+
+    const incoming = Array.from(files);
+    setSelectedFiles((prev) => mergeFilesUnique(prev, incoming));
+
+    setisFileUploadOpen(true);
+    try { e.target.value = ""; } catch { /* ignore */ }
   }
 
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
     e.stopPropagation();
     handleFilesAdd(e.dataTransfer.files);
+    setisFileUploadOpen(true);
   }
 
   function onDragOver(e: React.DragEvent) {
@@ -411,6 +446,16 @@ export default function TopicosPage() {
 
   const cardClass = "rounded-xl border border-[#098842] p-4 shadow-sm cursor-pointer hover:shadow-md h-28 w-80";
 
+  const handleCardClick = (t: Topic) => {
+    if (expandedTopicId === t.id) {
+      openTopic(t.id);
+    } else {
+      setExpandedTopicId(t.id);
+    }
+  };
+
+  const collapseAll = () => setExpandedTopicId(null);
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -425,7 +470,10 @@ export default function TopicosPage() {
           <div className="flex flex-wrap gap-6">
             <div
               className={`${cardClass} flex items-center justify-center`}
-              onClick={() => setIsAddTopicOpen(true)}
+              onClick={() => {
+                collapseAll();
+                setIsAddTopicOpen(true);
+              }}
             >
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2">
@@ -435,37 +483,85 @@ export default function TopicosPage() {
               </div>
             </div>
 
-            {topics.map((t) => (
-              <div
-                key={t.id}
-                className={`${cardClass} bg-white flex flex-col justify-between`}
-                onClick={() => openTopic(t.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") openTopic(t.id);
-                }}
-              >
-                <div>
-                  <h2 className="text-lg font-medium text-[#3b3b3b]">{t.title}</h2>
-                </div>
+            {topics.map((t) => {
+              const isExpanded = expandedTopicId === t.id;
+              const perCardClass = isExpanded
+                ? "rounded-xl border border-[#098842] p-4 shadow-sm cursor-pointer hover:shadow-md w-80"
+                : cardClass;
 
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm text-[#686464]">Arquivos adicionados: {t.material_count}</p>
+              return (
+                <div
+                  key={t.id}
+                  className={`${perCardClass} bg-white flex flex-col justify-between relative pb-10`}
+                  onClick={() => handleCardClick(t)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCardClick(t);
+                  }}
+                >
+                  <div>
+                    {!isExpanded ? (
+                      <div
+                        className="pr-4"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        <h2 className="text-lg font-medium text-[#3b3b3b]">
+                          {t.title}
+                        </h2>
+                      </div>
+                    ) : (
+                      <div className="pr-4">
+                        <h2 className="text-lg font-medium text-[#3b3b3b] whitespace-normal break-words">
+                          {t.title}
+                        </h2>
+                      </div>
+                    )}
+                  </div>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTopic(t.id);
-                    }}
-                    title="Apagar tópico"
-                    className="p-1 cursor-pointer"
-                  >
-                    <Image src="/imagens/apagar.svg" width={18} height={18} alt="Apagar" />
-                  </button>
+                  {!isExpanded ? (
+                    <div className="absolute left-4 right-4 bottom-3 flex items-center justify-between">
+                      <p className="text-sm text-[#686464]">Arquivos adicionados: {t.material_count}</p>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTopicToDelete(t);
+                          setShowDeleteModal(true);
+                        }}
+                        title="Apagar tópico"
+                        className="p-1 cursor-pointer"
+                      >
+                        <Image src="/imagens/apagar.svg" width={18} height={18} alt="Apagar" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex items-center justify-between">
+                      <p className="text-sm text-[#686464]">Arquivos adicionados: {t.material_count}</p>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTopicToDelete(t);
+                          setShowDeleteModal(true);
+                        }}
+                        title="Apagar tópico"
+                        className="p-1 cursor-pointer"
+                      >
+                        <Image src="/imagens/apagar.svg" width={18} height={18} alt="Apagar" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -510,6 +606,35 @@ export default function TopicosPage() {
         </div>
       </main>
 
+      {/* Modal de deletar, igual o do de lembretes */}
+      {showDeleteModal && topicToDelete && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl w-[640px] shadow-lg overflow-hidden">
+            <div className="bg-[#098842] p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-white">Confirmar exclusão</h2>
+                <button onClick={() => { setShowDeleteModal(false); setTopicToDelete(null); }} className="text-white cursor-pointer">
+                  <Image src="/imagens/X-branco.svg" width={20} height={20} alt="Fechar" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <p className="text-[#686464] text-center">Confirme no botão abaixo que você deseja excluir o tópico.</p>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <button onClick={confirmDelete} className="px-4 py-2 rounded-md bg-[#FF6262] text-white font-semibold hover:bg-[#FF6262]/85 cursor-pointer">
+                  Excluir
+                </button>
+                <button onClick={() => { setShowDeleteModal(false); setTopicToDelete(null); }} className="px-4 py-2 rounded-md bg-[#D9D9D9] font-semibold text-[#444444] hover:bg-[#D9D9D9]/70 cursor-pointer">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isAddTopicOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center text-[#686464] bg-black/40">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -539,6 +664,7 @@ export default function TopicosPage() {
         </div>
       )}
 
+      {/* Modal upload de arquivos */}
       {isFileUploadOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 pb-12 bg-black/40">
           <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden">
@@ -556,6 +682,15 @@ export default function TopicosPage() {
             </div>
 
             <div className="p-10 flex flex-col items-center min-h-[340px]">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={onInputChange}
+                className="hidden"
+                aria-label="Selecionar arquivos"
+              />
+
               {selectedFiles.length === 0 ? (
                 <div
                   onDrop={onDrop}
@@ -569,18 +704,12 @@ export default function TopicosPage() {
                   <h3 className="text-xl font-semibold text-[#444] mb-2">Arraste os Arquivos Aqui</h3>
                   <p className="text-sm text-[#666] mb-6">OU</p>
 
-                  <label className="inline-block">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={onInputChange}
-                      className="hidden"
-                      aria-label="Abrir explorador"
-                    />
-                    <span className="inline-block bg-[#098842] text-white px-6 py-3 rounded cursor-pointer">
-                      Abrir Explorador de Arquivos
-                    </span>
-                  </label>
+                  <span
+                    className="inline-block bg-[#098842] text-white px-6 py-3 rounded cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Abrir Explorador de Arquivos
+                  </span>
                 </div>
               ) : (
                 <div className="w-full flex flex-col items-center">
@@ -588,22 +717,13 @@ export default function TopicosPage() {
                     <h3 className="text-xl font-semibold text-[#444]">Arquivos Selecionados</h3>
 
                     <div className="flex gap-3">
-                      <label>
-                        <input
-                          type="file"
-                          multiple
-                          onChange={onInputChange}
-                          className="hidden"
-                          aria-label="Adicionar mais arquivos"
-                        />
-                        <button
-                          className="px-4 py-2 border rounded"
-                          style={{ borderColor: "#098842", color: "#098842" }}
-                        >
-                          Adicionar mais
-                        </button>
-                      </label>
-
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 border rounded"
+                        style={{ borderColor: "#098842", color: "#098842" }}
+                      >
+                        Adicionar mais
+                      </button>
                     </div>
                   </div>
 
@@ -659,11 +779,12 @@ export default function TopicosPage() {
                         backgroundColor: "white"
                       }}
                       onClick={() => {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
+                        setisFileUploadOpen(false);
+                        setSelectedFiles([]); 
                       }}
                       disabled={isUploading || isGeneratingSummary}
                     >
-                      Voltar
+                      Cancelar
                     </button>
 
                     <button
