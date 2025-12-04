@@ -447,6 +447,12 @@ class StudentService {
             where: { id: itemId }
         })
     }
+
+    async deleteSubject(subjectId: number) {
+        return await prisma.subject.delete({
+            where: { id: subjectId }
+        })
+    }
 }
 
 export const studentService = new StudentService()

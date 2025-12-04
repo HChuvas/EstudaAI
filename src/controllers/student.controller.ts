@@ -367,3 +367,13 @@ export const deleteChecklistItem = async (req: Request, res: Response, next: Nex
         next(error)
     }
 }
+
+export const deleteSubject = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const subjectId = Number(req.query.subjectId)
+        const deletedSubject = await studentService.deleteSubject(subjectId)
+        res.status(200).json(deletedSubject)
+    } catch (error) {
+        next(error)
+    }
+}
