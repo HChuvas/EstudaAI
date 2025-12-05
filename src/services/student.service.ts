@@ -262,9 +262,14 @@ class StudentService {
     }
 
     async topicSummaries(topicId: number) {
-        return prisma.summary.findMany({
+        const topic = await prisma.topic.findUnique({
+            where: { id: topicId }
+        })
+        const summaries = await prisma.summary.findMany({
             where: { topic_id: topicId }
         })
+
+        return { title: topic?.title, summaries }
     }
 
     async getStudyPlans(subjectId: number) {
