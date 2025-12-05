@@ -162,6 +162,10 @@ export default function TopicosPage() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [showDeletePlanModal, setShowDeletePlanModal] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<StudyPlan | null>(null);
+  const [isDeletingPlan, setIsDeletingPlan] = useState(false);
+
   useEffect(() => {
     async function fetchTopics() {
       try {
@@ -463,6 +467,48 @@ export default function TopicosPage() {
 
   const collapseAll = () => setExpandedTopicId(null);
 
+  async function handleDeleteStudyPlan(planId: number) {
+    try {
+      const url = `http://localhost:8080/students/studyplans/delete?planId=${planId}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        }
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Status ${res.status}`);
+      }
+
+      // remove do estado local
+      setStudyPlans(prev => prev.filter(p => p.id !== planId));
+    } catch (err) {
+      console.error("Erro ao deletar plano de estudos:", err);
+      throw err;
+    }
+  }
+
+  const confirmDeletePlan = async () => {
+    if (!planToDelete) return;
+    setIsDeletingPlan(true);
+    try {
+      await handleDeleteStudyPlan(planToDelete.id);
+      setShowDeletePlanModal(false);
+      setPlanToDelete(null);
+    } catch (err) {
+      let msg = String(err);
+      try {
+        msg = (err as Error).message || msg;
+      } catch {}
+      alert("Erro ao deletar plano: " + msg);
+    } finally {
+      setIsDeletingPlan(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -590,21 +636,47 @@ export default function TopicosPage() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`${cardClass} bg-white flex flex-col justify-between`}
+                className={`${cardClass} bg-white flex flex-col justify-between relative pb-10`}
+                // abre visual do plano ao clicar no card
                 onClick={() => handleViewPlan(plan.id)}
                 role="button"
                 tabIndex={0}
               >
-                <div>
-                  <h3 className="font-medium text-lg text-[#3b3b3b]">
-                    {plan.title}
-                  </h3>
+                {/* Title: truncado em até 2 linhas, com padding-right para não sobrepor o ícone/rodapé */}
+                <div className="pr-4">
+                  <div
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    <h3 className="font-medium text-lg text-[#3b3b3b]">
+                      {plan.title}
+                    </h3>
+                  </div>
                 </div>
 
-                <div className="mt-2">
+                <div className="absolute left-4 right-4 bottom-3 flex items-center justify-between">
                   <p className="text-sm text-[#686464]">
                     Adicionado em: {`${plan.created_at.getDay()}/${plan.created_at.getMonth() + 1}/${plan.created_at.getFullYear()}`}
                   </p>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setPlanToDelete(plan);
+                      setShowDeletePlanModal(true);
+                    }}
+                    className="ml-4 cursor-pointer"
+                    title="Apagar plano de estudos"
+                  >
+                    <Image src="/imagens/apagar.svg" width={18} height={18} alt="Apagar Plano" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -613,7 +685,7 @@ export default function TopicosPage() {
         </div>
       </main>
 
-      {/* Modal de deletar, igual o do de lembretes */}
+      {/* Modal de deletar */}
       {showDeleteModal && topicToDelete && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl w-[640px] shadow-lg overflow-hidden">
@@ -634,6 +706,45 @@ export default function TopicosPage() {
                   Excluir
                 </button>
                 <button onClick={() => { setShowDeleteModal(false); setTopicToDelete(null); }} className="px-4 py-2 rounded-md bg-[#D9D9D9] font-semibold text-[#444444] hover:bg-[#D9D9D9]/70 cursor-pointer">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação para exclusão de PLANOS DE ESTUDO */}
+      {showDeletePlanModal && planToDelete && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl w-[640px] shadow-lg overflow-hidden">
+            <div className="bg-[#098842] p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-white">Confirmar exclusão</h2>
+                <button
+                  onClick={() => { setShowDeletePlanModal(false); setPlanToDelete(null); }}
+                  className="text-white cursor-pointer"
+                >
+                  <Image src="/imagens/X-branco.svg" width={20} height={20} alt="Fechar" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <p className="text-[#686464] text-center">Confirme no botão abaixo que você deseja excluir o plano de estudos.</p>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <button
+                  onClick={confirmDeletePlan}
+                  className="px-4 py-2 rounded-md bg-[#FF6262] text-white font-semibold hover:bg-[#FF6262]/85 cursor-pointer"
+                  disabled={isDeletingPlan}
+                >
+                  {isDeletingPlan ? "Excluindo..." : "Excluir"}
+                </button>
+                <button
+                  onClick={() => { setShowDeletePlanModal(false); setPlanToDelete(null); }}
+                  className="px-4 py-2 rounded-md bg-[#D9D9D9] font-semibold text-[#444444] hover:bg-[#D9D9D9]/70 cursor-pointer"
+                >
                   Cancelar
                 </button>
               </div>
