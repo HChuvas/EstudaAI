@@ -150,7 +150,9 @@ export default function TopicosPage() {
   const [isViewPlanModalOpen, setIsViewPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
 
+  // Novo: flag para saber que abrimos o modal de criação (esperamos um novo plano)
   const [wasCreatingPlan, setWasCreatingPlan] = useState(false);
+  // guardo os ids anteriores para comparar depois
   const prevPlanIdsRef = useRef<Set<number>>(new Set());
 
   const [showPipelineProgress, setShowPipelineProgress] = useState(false);
@@ -189,6 +191,7 @@ export default function TopicosPage() {
     fetchTopics();
   }, [disciplina]);
 
+  // Extraí a função para poder reutilizar quando fechar o modal de criação
   const fetchStudyPlans = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:8080/students/studyplans?subjectId=${disciplina}`, {
@@ -212,6 +215,7 @@ export default function TopicosPage() {
     }
   }, [disciplina]);
 
+  // Carrega inicialmente os planos
   useEffect(() => {
     (async () => {
       const initialPlans = await fetchStudyPlans();
@@ -219,22 +223,29 @@ export default function TopicosPage() {
     })();
   }, [fetchStudyPlans]);
 
+  // Quando o modal de criação fecha e estávamos criando, atualiza planos e abre o novo plano
   useEffect(() => {
     if (!isStudyPlanModalOpen && wasCreatingPlan) {
       (async () => {
+        // buscar planos atualizados
         const fetched = await fetchStudyPlans();
 
+        // compara com prev ids (guardados quando abrimos o modal)
         const prevIds = prevPlanIdsRef.current ?? new Set<number>();
         const newPlans = fetched.filter(p => !prevIds.has(p.id));
 
+        // atualiza o estado local com os planos fetched
         setStudyPlans(fetched);
 
         let planToOpen: StudyPlan | undefined;
 
         if (newPlans.length > 0) {
+          // se houver planos novos identificados por id, pegue o mais recente entre eles
           planToOpen = newPlans.sort((a,b) => b.created_at.getTime() - a.created_at.getTime())[0];
         } else {
+          // fallback: tenta achar o plano mais recente comparando created_at com o maior que tínhamos antes
           const prevMax = Array.from(prevIds).length === 0 ? null : Math.max(...Array.from(prevIds));
+          // se não identificamos pelo id, abrimos simplesmente o mais recente (por created_at)
           if (fetched.length > 0) {
             planToOpen = fetched.sort((a,b) => b.created_at.getTime() - a.created_at.getTime())[0];
           }
@@ -244,6 +255,8 @@ export default function TopicosPage() {
           setSelectedPlanId(planToOpen.id);
           setIsViewPlanModalOpen(true);
         }
+
+        // reset flag
         setWasCreatingPlan(false);
         prevPlanIdsRef.current = new Set();
       })();
@@ -424,9 +437,11 @@ export default function TopicosPage() {
       const data = await generateResponse.json();
       console.log("Pipeline de resumo concluída com sucesso:", data);
 
+      // Finaliza com sucesso
       setPipelineStep(5);
       setPipelineMessage("Processamento concluído com sucesso!");
       
+      // Aguarda um pouco para mostrar a mensagem de sucesso
       await new Promise(resolve => setTimeout(resolve, 1000));
 
     } catch (error) {
@@ -434,6 +449,7 @@ export default function TopicosPage() {
       setPipelineMessage("Erro no processamento. Tente novamente.");
       throw error;
     } finally {
+      // Esconde o popup após um breve delay
       setTimeout(() => {
         setShowPipelineProgress(false);
         setPipelineStep(0);
