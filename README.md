@@ -1,6 +1,7 @@
-# Projeto Full-Stack com IA
+# EstudaAI
 
-Este projeto é composto por três serviços principais: **Backend** (Node.js), **Frontend** (React) e **AI-Service** (Python). Cada um deles roda de forma independente, mas trabalham em conjunto para fornecer a funcionalidade completa da aplicação.
+Este projeto foi feito para a disciplina de Extensão 3, do curso de Ciência da Computação da Universidade Estadual do Ceará.
+O EstudaAI é um sistema de planejamento e gerenciamento de estudos pessoal. ele permite a geração de resumos, lembretes e planos de estudos com ajuda de um LLM.
 
 ## 📋 Pré-requisitos
 
