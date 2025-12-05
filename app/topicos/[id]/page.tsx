@@ -423,7 +423,7 @@ export default function Page() {
   }, [searchParams, id]); 
 
   return(
-    <main>
+    <main className="bg-[#FFFFFF]">
       <Navbar />
       
       <ModalConfirmacao
@@ -460,7 +460,7 @@ export default function Page() {
                 [&::-webkit-scrollbar-thumb]:bg-[#098842]
                 [&::-webkit-scrollbar-thumb]:rounded">
                 
-                <button 
+                {/*<button 
                   className="flex flex-col justify-center items-center min-w-36 min-h-20 pt-3 ml-2 mb-2 border-2 border-dashed border-[#098842] rounded-xl shrink-0 bg-white hover:bg-[#f0f8f0] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#098842] focus:ring-opacity-50 group"
                   onClick={handleAdicionarMaterial}
                   aria-label="Adicionar novo material"
@@ -475,7 +475,7 @@ export default function Page() {
                   <span className="font-montserrat font-normal text-[0.7rem] text-center text-[#098842] mx-0.5 px-1 mt-1">
                     Adicionar Material
                   </span>
-                </button>
+                </button>*/}
                 
                 {topicoCompleto.materiais.map(material => (
                   <button 
@@ -526,16 +526,17 @@ export default function Page() {
                         >
                           <Image src="/imagens/check.svg" width={20} height={20} alt="Salvar"/>
                         </button>
-                        <button 
+                        {/*<button 
                           className="w-5 h-5 cursor-pointer hover:opacity-70 transition-opacity" 
                           aria-label="Cancelar edição"
                           onClick={handleCancelarEdicao}
                         >
                           <Image src="/imagens/X-pequeno.svg" width={20} height={20} alt="Cancelar"/>
-                        </button>
+                        </button>*/}
                       </>
-                    ) : (
-                      <>
+                    ) : 
+                    <></>
+                      /*<>
                         <button 
                           className="w-5 h-5 cursor-pointer hover:opacity-70 transition-opacity" 
                           aria-label="Excluir tópico"
@@ -543,8 +544,8 @@ export default function Page() {
                         >
                           <Image src="/imagens/X-pequeno.svg" width={20} height={20} alt="Excluir"/>
                         </button>
-                      </>
-                    )}
+                      </>*/
+                    }
                   </div>
                 </span>
                 
@@ -562,7 +563,7 @@ export default function Page() {
                 
                 {editandoId !== topico.id && (
                   <span className="flex flex-row justify-end gap-5 px-0.5 py-0.5 mt-4">
-                    <button 
+                    {/*<button 
                       className="w-5 h-5 cursor-pointer hover:opacity-70 transition-opacity" 
                       aria-label="Atualizar"
                       onClick={handleAtualizarTranscricao}
@@ -575,7 +576,7 @@ export default function Page() {
                       onClick={() => handleIniciarEdicao(topico)}
                     >
                       <Image src="/imagens/editar.svg" width={20} height={20} alt="Editar"/>
-                    </button>
+                    </button>*/}
                   </span>
                 )}
               </div>
