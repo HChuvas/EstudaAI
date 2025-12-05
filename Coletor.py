@@ -1,13 +1,3 @@
-# Extrair dados de um input
-# 3 modulos (ideia):
-#   - texto -> pode ser inserido no formato como está
-#   - audio/video -> precisamos apenas do áudio nesse estado, então podemos pegar o conteúdo de áudio
-#   - arquivo pdf/slide -> precisamos do conteúdo desse material. 
-#                          agora, temos dois problemas:
-#                               1: tamanho do arquivo -> "e se eu quiser colocar Dom Casmurro **INTEIRO**, pra estudar para minha prova de paradidático"
-#                               2: e os materiais visuais dentro de um slide
-#
-# Precisamos de Chunking dos dados para: arquivos muito longos ou muitos arquivos
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from docling.document_converter import DocumentConverter, PdfFormatOption, AudioFormatOption
