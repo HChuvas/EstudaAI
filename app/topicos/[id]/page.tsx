@@ -392,9 +392,9 @@ export default function Page() {
 
         if (mounted) {
           setTopicoCompleto({
-            topicos: topicos || [],
+            topicos: topicos.summaries || [],
             materiais: materiais || [],
-            tituloTopico: `Tópico ${topicId}`
+            tituloTopico: topicos.title
           });
 
           await fetchMensagensChat(topicId.toString(), token);
@@ -420,7 +420,7 @@ export default function Page() {
     return () => {
       mounted = false;
     };
-  }, [searchParams, id]); // Removi fetchMensagensChat das dependências
+  }, [searchParams, id]); 
 
   return(
     <main>
