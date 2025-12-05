@@ -102,12 +102,6 @@ export default function Login() {
         </div>
 
         <div className="text-center w-full">
-          <p className="mb-4">
-            <Link href="/forgot-password" className="text-[#494949] text-sm font-montserrat hover:text-[#098842] transition-colors">
-              Esqueceu a senha?
-            </Link>
-          </p>
-
           <p className="text-[#494949] text-sm">
             Ainda não possui uma conta?{' '}
             <Link href="/cadastro" className="text-[#098842] font-bold hover:text-[#087c3a] transition-colors">
