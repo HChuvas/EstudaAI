@@ -44,6 +44,13 @@ function PipelineProgressModal({
       <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4">
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 mb-4">
+            <Image 
+              src="/imagens/Loading.svg" 
+              width={64} 
+              height={64} 
+              alt="Processando" 
+              className="animate-spin"
+            />
           </div>
           
           <h3 className="text-xl font-semibold text-[#444] mb-2">

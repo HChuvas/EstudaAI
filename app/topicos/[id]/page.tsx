@@ -588,7 +588,7 @@ export default function Page() {
               className="flex-1 border-2 border-[#098842] bg-white rounded-xl min-h-86 p-4 overflow-y-auto flex flex-col gap-4 box-border drop-shadow-md"
             >
               {chat.mensagens.map(mensagem => ( 
-                <div key={mensagem.id} className={mensagem.ia ? "self-start max-w-80 p-3 bg-white border-2 border-[#098842] rounded-2xl text-[#333333] font-montserrat text-sm leading-6 relative box-border" : "self-end max-w-80 p-3 bg-[#098842] rounded-2xl text-white font-montserrat text-sm leading-6 relative box-border"}>
+                <div key={mensagem.id} className={mensagem.ia ? "self-start max-w-100 p-3 bg-white border-2 border-[#098842] rounded-2xl text-[#333333] font-montserrat text-sm leading-6 relative box-border" : "self-end max-w-80 p-3 bg-[#098842] rounded-2xl text-white font-montserrat text-sm leading-6 relative box-border"}>
                   <div className="font-montserrat text-sm leading-6">
                     {renderizarTextoComNegrito(mensagem.conteudo)}
                   </div>
