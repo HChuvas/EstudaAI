@@ -150,6 +150,8 @@ export default function TopicosPage() {
   const [isViewPlanModalOpen, setIsViewPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
 
+  const [wasCreatingPlan, setWasCreatingPlan] = useState(false);
+  const prevPlanIdsRef = useRef<Set<number>>(new Set());
 
   const [showPipelineProgress, setShowPipelineProgress] = useState(false);
   const [pipelineStep, setPipelineStep] = useState(0);
@@ -182,32 +184,71 @@ export default function TopicosPage() {
       } catch (error) {
         console.error("Erro ao criar disciplina:", error);
       }  
-      }
+    }
 
-      async function fetchStudyPlans() {
-        try {
-          const response = await fetch(`http://localhost:8080/students/studyplans?subjectId=${disciplina}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        });
+    fetchTopics();
+  }, [disciplina]);
 
-        const data = await response.json();
-        const plans = data.map((p: any) => ({
-          ...p,
-          created_at: new Date(p.created_at),
-        }));
+  const fetchStudyPlans = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/students/studyplans?subjectId=${disciplina}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
 
-        setStudyPlans(plans)
-        } catch (error) {
-          console.error("Erro ao pegar planos de estudos:", error)
+      const data = await response.json();
+      const plans = data.map((p: any) => ({
+        ...p,
+        created_at: new Date(p.created_at),
+      }));
+
+      return plans as StudyPlan[];
+    } catch (error) {
+      console.error("Erro ao pegar planos de estudos:", error)
+      return [] as StudyPlan[];
+    }
+  }, [disciplina]);
+
+  useEffect(() => {
+    (async () => {
+      const initialPlans = await fetchStudyPlans();
+      setStudyPlans(initialPlans);
+    })();
+  }, [fetchStudyPlans]);
+
+  useEffect(() => {
+    if (!isStudyPlanModalOpen && wasCreatingPlan) {
+      (async () => {
+        const fetched = await fetchStudyPlans();
+
+        const prevIds = prevPlanIdsRef.current ?? new Set<number>();
+        const newPlans = fetched.filter(p => !prevIds.has(p.id));
+
+        setStudyPlans(fetched);
+
+        let planToOpen: StudyPlan | undefined;
+
+        if (newPlans.length > 0) {
+          planToOpen = newPlans.sort((a,b) => b.created_at.getTime() - a.created_at.getTime())[0];
+        } else {
+          const prevMax = Array.from(prevIds).length === 0 ? null : Math.max(...Array.from(prevIds));
+          if (fetched.length > 0) {
+            planToOpen = fetched.sort((a,b) => b.created_at.getTime() - a.created_at.getTime())[0];
+          }
         }
-      }
-    fetchStudyPlans()
-    fetchTopics()
-  }, [disciplina])
+
+        if (planToOpen) {
+          setSelectedPlanId(planToOpen.id);
+          setIsViewPlanModalOpen(true);
+        }
+        setWasCreatingPlan(false);
+        prevPlanIdsRef.current = new Set();
+      })();
+    }
+  }, [isStudyPlanModalOpen, wasCreatingPlan, fetchStudyPlans]);
 
   async function handleAddTopic() {
     try {
@@ -383,11 +424,9 @@ export default function TopicosPage() {
       const data = await generateResponse.json();
       console.log("Pipeline de resumo concluída com sucesso:", data);
 
-      // Finaliza com sucesso
       setPipelineStep(5);
       setPipelineMessage("Processamento concluído com sucesso!");
       
-      // Aguarda um pouco para mostrar a mensagem de sucesso
       await new Promise(resolve => setTimeout(resolve, 1000));
 
     } catch (error) {
@@ -395,7 +434,6 @@ export default function TopicosPage() {
       setPipelineMessage("Erro no processamento. Tente novamente.");
       throw error;
     } finally {
-      // Esconde o popup após um breve delay
       setTimeout(() => {
         setShowPipelineProgress(false);
         setPipelineStep(0);
@@ -623,7 +661,12 @@ export default function TopicosPage() {
           <div className="flex flex-wrap gap-6">
             <div
               className={`${cardClass} flex items-center justify-center`}
-              onClick={() => setIsStudyPlanModalOpen(true)}
+              onClick={() => {
+                // quando abrir o modal de criação, salvo os ids atuais e marco que estamos criando
+                prevPlanIdsRef.current = new Set(plans.map(p => p.id));
+                setWasCreatingPlan(true);
+                setIsStudyPlanModalOpen(true);
+              }}
             >
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2">
@@ -685,7 +728,7 @@ export default function TopicosPage() {
         </div>
       </main>
 
-      {/* Modal de deletar */}
+      {/* Modal de deletar */} 
       {showDeleteModal && topicToDelete && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl w-[640px] shadow-lg overflow-hidden">
