@@ -150,6 +150,10 @@ export default function TopicosPage() {
   const [isViewPlanModalOpen, setIsViewPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
 
+  // Novo: flag para saber que abrimos o modal de criação (esperamos um novo plano)
+  const [wasCreatingPlan, setWasCreatingPlan] = useState(false);
+  // guardo os ids anteriores para comparar depois
+  const prevPlanIdsRef = useRef<Set<number>>(new Set());
 
   const [showPipelineProgress, setShowPipelineProgress] = useState(false);
   const [pipelineStep, setPipelineStep] = useState(0);
@@ -182,32 +186,82 @@ export default function TopicosPage() {
       } catch (error) {
         console.error("Erro ao criar disciplina:", error);
       }  
-      }
+    }
 
-      async function fetchStudyPlans() {
-        try {
-          const response = await fetch(`http://localhost:8080/students/studyplans?subjectId=${disciplina}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        });
+    fetchTopics();
+  }, [disciplina]);
 
-        const data = await response.json();
-        const plans = data.map((p: any) => ({
-          ...p,
-          created_at: new Date(p.created_at),
-        }));
+  // Extraí a função para poder reutilizar quando fechar o modal de criação
+  const fetchStudyPlans = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/students/studyplans?subjectId=${disciplina}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
 
-        setStudyPlans(plans)
-        } catch (error) {
-          console.error("Erro ao pegar planos de estudos:", error)
+      const data = await response.json();
+      const plans = data.map((p: any) => ({
+        ...p,
+        created_at: new Date(p.created_at),
+      }));
+
+      return plans as StudyPlan[];
+    } catch (error) {
+      console.error("Erro ao pegar planos de estudos:", error)
+      return [] as StudyPlan[];
+    }
+  }, [disciplina]);
+
+  // Carrega inicialmente os planos
+  useEffect(() => {
+    (async () => {
+      const initialPlans = await fetchStudyPlans();
+      setStudyPlans(initialPlans);
+    })();
+  }, [fetchStudyPlans]);
+
+  // Quando o modal de criação fecha e estávamos criando, atualiza planos e abre o novo plano
+  useEffect(() => {
+    if (!isStudyPlanModalOpen && wasCreatingPlan) {
+      (async () => {
+        // buscar planos atualizados
+        const fetched = await fetchStudyPlans();
+
+        // compara com prev ids (guardados quando abrimos o modal)
+        const prevIds = prevPlanIdsRef.current ?? new Set<number>();
+        const newPlans = fetched.filter(p => !prevIds.has(p.id));
+
+        // atualiza o estado local com os planos fetched
+        setStudyPlans(fetched);
+
+        let planToOpen: StudyPlan | undefined;
+
+        if (newPlans.length > 0) {
+          // se houver planos novos identificados por id, pegue o mais recente entre eles
+          planToOpen = newPlans.sort((a,b) => b.created_at.getTime() - a.created_at.getTime())[0];
+        } else {
+          // fallback: tenta achar o plano mais recente comparando created_at com o maior que tínhamos antes
+          const prevMax = Array.from(prevIds).length === 0 ? null : Math.max(...Array.from(prevIds));
+          // se não identificamos pelo id, abrimos simplesmente o mais recente (por created_at)
+          if (fetched.length > 0) {
+            planToOpen = fetched.sort((a,b) => b.created_at.getTime() - a.created_at.getTime())[0];
+          }
         }
-      }
-    fetchStudyPlans()
-    fetchTopics()
-  }, [disciplina])
+
+        if (planToOpen) {
+          setSelectedPlanId(planToOpen.id);
+          setIsViewPlanModalOpen(true);
+        }
+
+        // reset flag
+        setWasCreatingPlan(false);
+        prevPlanIdsRef.current = new Set();
+      })();
+    }
+  }, [isStudyPlanModalOpen, wasCreatingPlan, fetchStudyPlans]);
 
   async function handleAddTopic() {
     try {
@@ -623,7 +677,12 @@ export default function TopicosPage() {
           <div className="flex flex-wrap gap-6">
             <div
               className={`${cardClass} flex items-center justify-center`}
-              onClick={() => setIsStudyPlanModalOpen(true)}
+              onClick={() => {
+                // quando abrir o modal de criação, salvo os ids atuais e marco que estamos criando
+                prevPlanIdsRef.current = new Set(plans.map(p => p.id));
+                setWasCreatingPlan(true);
+                setIsStudyPlanModalOpen(true);
+              }}
             >
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2">
@@ -685,7 +744,7 @@ export default function TopicosPage() {
         </div>
       </main>
 
-      {/* Modal de deletar */}
+      {/* Modal de deletar */} 
       {showDeleteModal && topicToDelete && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl w-[640px] shadow-lg overflow-hidden">
